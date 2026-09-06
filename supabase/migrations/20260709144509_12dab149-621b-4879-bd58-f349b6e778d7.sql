@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.protect_original_author() FROM PUBLIC, anon, authenticated;

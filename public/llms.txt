@@ -1,0 +1,11 @@
+# Melik Recipes
+
+> Recetario personal con asistente de cocina IA: organiza tus recetas y recibe guía paso a paso mientras cocinas.
+
+Melik Recipes es una aplicación web y móvil para cocineros amateur. Permite crear, buscar y organizar recetas (manualmente o cargando archivos), sincronizarlas en la nube y cocinarlas con la ayuda de "El Chef", un asistente que reconoce ingredientes desde fotos y guía cada paso.
+
+## Pages
+
+- [Mis Recetas](/): Página principal con búsqueda, orden y creación de recetas.
+- [Kiko](/chef): Chat con Kiko, reconocimiento de ingredientes y guía paso a paso.
+- [Iniciar sesión](/auth): Acceso con email o Google para sincronizar recetas en la nube.
