@@ -1,4 +1,6 @@
-import bcrypt from "bcrypt";
+// Pure-JS implementation (no native compilation step) — keeps the Docker
+// build simple and portable across host architectures.
+import bcrypt from "bcryptjs";
 
 const SALT_ROUNDS = 12;
 
