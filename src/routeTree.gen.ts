@@ -33,6 +33,7 @@ import { Route as DescubrirChatIdRouteImport } from './routes/descubrir.$chatId'
 import { Route as AuthenticatedSharedShareTokenRouteImport } from './routes/_authenticated/shared.$shareToken'
 import { Route as ApiPublicHooksMelikPlusRenewRouteImport } from './routes/api/public/hooks/melik-plus-renew'
 import { Route as ApiPublicHooksTrialExpiringReminderRouteImport } from './routes/api/public/hooks/trial-expiring-reminder'
+import { Route as ApiPublicFilesBucketSplatRouteImport } from './routes/api/public/files/$bucket/$'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -156,6 +157,12 @@ const ApiPublicHooksTrialExpiringReminderRoute =
     path: '/api/public/hooks/trial-expiring-reminder',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicFilesBucketSplatRoute =
+  ApiPublicFilesBucketSplatRouteImport.update({
+    id: '/api/public/files/$bucket/$',
+    path: '/api/public/files/$bucket/$',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -181,6 +188,7 @@ export interface FileRoutesByFullPath {
   '/shared/$shareToken': typeof AuthenticatedSharedShareTokenRoute
   '/api/public/hooks/melik-plus-renew': typeof ApiPublicHooksMelikPlusRenewRoute
   '/api/public/hooks/trial-expiring-reminder': typeof ApiPublicHooksTrialExpiringReminderRoute
+  '/api/public/files/$bucket/$': typeof ApiPublicFilesBucketSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -204,6 +212,7 @@ export interface FileRoutesByTo {
   '/shared/$shareToken': typeof AuthenticatedSharedShareTokenRoute
   '/api/public/hooks/melik-plus-renew': typeof ApiPublicHooksMelikPlusRenewRoute
   '/api/public/hooks/trial-expiring-reminder': typeof ApiPublicHooksTrialExpiringReminderRoute
+  '/api/public/files/$bucket/$': typeof ApiPublicFilesBucketSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -231,6 +240,7 @@ export interface FileRoutesById {
   '/_authenticated/shared/$shareToken': typeof AuthenticatedSharedShareTokenRoute
   '/api/public/hooks/melik-plus-renew': typeof ApiPublicHooksMelikPlusRenewRoute
   '/api/public/hooks/trial-expiring-reminder': typeof ApiPublicHooksTrialExpiringReminderRoute
+  '/api/public/files/$bucket/$': typeof ApiPublicFilesBucketSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -258,6 +268,7 @@ export interface FileRouteTypes {
     | '/shared/$shareToken'
     | '/api/public/hooks/melik-plus-renew'
     | '/api/public/hooks/trial-expiring-reminder'
+    | '/api/public/files/$bucket/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -281,6 +292,7 @@ export interface FileRouteTypes {
     | '/shared/$shareToken'
     | '/api/public/hooks/melik-plus-renew'
     | '/api/public/hooks/trial-expiring-reminder'
+    | '/api/public/files/$bucket/$'
   id:
     | '__root__'
     | '/'
@@ -307,6 +319,7 @@ export interface FileRouteTypes {
     | '/_authenticated/shared/$shareToken'
     | '/api/public/hooks/melik-plus-renew'
     | '/api/public/hooks/trial-expiring-reminder'
+    | '/api/public/files/$bucket/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -323,6 +336,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiPublicHooksMelikPlusRenewRoute: typeof ApiPublicHooksMelikPlusRenewRoute
   ApiPublicHooksTrialExpiringReminderRoute: typeof ApiPublicHooksTrialExpiringReminderRoute
+  ApiPublicFilesBucketSplatRoute: typeof ApiPublicFilesBucketSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -495,6 +509,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksTrialExpiringReminderRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/files/$bucket/$': {
+      id: '/api/public/files/$bucket/$'
+      path: '/api/public/files/$bucket/$'
+      fullPath: '/api/public/files/$bucket/$'
+      preLoaderRoute: typeof ApiPublicFilesBucketSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -570,6 +591,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksMelikPlusRenewRoute: ApiPublicHooksMelikPlusRenewRoute,
   ApiPublicHooksTrialExpiringReminderRoute:
     ApiPublicHooksTrialExpiringReminderRoute,
+  ApiPublicFilesBucketSplatRoute: ApiPublicFilesBucketSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

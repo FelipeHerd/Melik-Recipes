@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { Bell } from "lucide-react";
-import { useSessionUser } from "@/lib/auth/session.client";
+import { useSessionUser } from "@/lib/auth/session-store";
 import { getMyUnreadNotificationsCount } from "@/lib/admin.functions";
 
 // Hook interno: user id actual + refresco del contador de no leídas.

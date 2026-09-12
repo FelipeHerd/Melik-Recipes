@@ -1,4 +1,4 @@
-import type { ColumnType, Generated, JSONColumnType } from "kysely";
+import type { ColumnType, Generated } from "kysely";
 
 export type AppRole = "admin" | "user" | "dev";
 
@@ -9,6 +9,14 @@ type GeneratedTimestamp = ColumnType<Date, Date | string | undefined, Date | str
 type RequiredTimestamp = ColumnType<Date, Date | string, Date | string>;
 type NullableTimestamp = ColumnType<Date | null, Date | string | null | undefined, Date | string | null>;
 type NullableDate = ColumnType<string | null, string | null | undefined, string | null>;
+
+// node-postgres does NOT auto-serialize JS values for jsonb columns — a
+// plain array/object bound as a query parameter fails with "invalid input
+// syntax for type json" (verified against a live instance). Every write to
+// a jsonb column must pass an already-`JSON.stringify`'d string (see
+// `toJsonb` in db.server.ts); reads come back already parsed by pg.
+type JsonColumn<Select> = ColumnType<Select, string | null, string | null>;
+type GeneratedJsonColumn<Select> = ColumnType<Select, string | null | undefined, string | null>;
 
 export interface UsersTable {
   id: Generated<string>;
@@ -57,8 +65,8 @@ export interface RecipesTable {
   time_minutes: number | null;
   ingredients: string | null;
   instructions: string | null;
-  ingredients_json: JSONColumnType<unknown[]> | null;
-  instructions_json: JSONColumnType<unknown[]> | null;
+  ingredients_json: JsonColumn<unknown[] | null>;
+  instructions_json: JsonColumn<unknown[] | null>;
   notes: string | null;
   image_url: string | null;
   is_baker_mode: Generated<boolean>;
@@ -92,7 +100,7 @@ export interface DiscoverChatsTable {
   id: Generated<string>;
   user_id: string;
   title: Generated<string>;
-  messages: Generated<JSONColumnType<unknown[]>>;
+  messages: GeneratedJsonColumn<unknown[]>;
   created_at: GeneratedTimestamp;
   updated_at: GeneratedTimestamp;
 }
@@ -112,7 +120,7 @@ export interface AdminAuditLogTable {
   admin_id: string | null;
   action: string;
   target_user_id: string | null;
-  metadata: Generated<JSONColumnType<Record<string, unknown>>>;
+  metadata: GeneratedJsonColumn<Record<string, unknown>>;
   created_at: GeneratedTimestamp;
 }
 

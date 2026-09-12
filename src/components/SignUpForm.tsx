@@ -4,7 +4,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { errorText } from "@/lib/errors/toast";
 import { signup } from "@/lib/auth/auth.functions";
-import { setSession } from "@/lib/auth/session.client";
+import { setSession } from "@/lib/auth/session-store";
 import { PasswordChecklist, isPasswordStrong } from "@/components/PasswordChecklist";
 import { UsernameField, type UsernameStatus } from "@/components/UsernameField";
 import { USERNAME_REGEX } from "@/lib/username.functions";

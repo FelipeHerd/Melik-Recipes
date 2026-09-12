@@ -1,7 +1,7 @@
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Crown, LogIn, LogOut, User as UserIcon } from "lucide-react";
-import { clearSession, useSessionUser } from "@/lib/auth/session.client";
+import { clearSession, useSessionUser } from "@/lib/auth/session-store";
 import { getProfile } from "@/lib/recipes.functions";
 import melikBakeryLogo from "@/assets/melik-bakery-logo.png.asset.json";
 import {

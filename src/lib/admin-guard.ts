@@ -8,7 +8,7 @@
 
 import { redirect, isRedirect } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { getSession } from "@/lib/auth/session.client";
+import { getSession } from "@/lib/auth/session-store";
 import { checkIsAdmin } from "@/lib/admin.functions";
 import type { QueryClient } from "@tanstack/react-query";
 

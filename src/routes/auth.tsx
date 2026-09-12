@@ -3,7 +3,7 @@ import { Suspense, lazy, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { login } from "@/lib/auth/auth.functions";
-import { setSession } from "@/lib/auth/session.client";
+import { setSession } from "@/lib/auth/session-store";
 import { AuthField, authInputClass } from "@/components/AuthField";
 import { AuthPageSkeleton, AuthSkeleton } from "@/components/AuthSkeleton";
 import melikLogo from "@/assets/melik-logo.png.asset.json";

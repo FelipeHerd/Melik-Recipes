@@ -1,5 +1,5 @@
 import { createMiddleware } from "@tanstack/react-start";
-import { getToken } from "@/lib/auth/session.client";
+import { getToken } from "@/lib/auth/session-store";
 
 // Direct replacement for src/integrations/supabase/auth-attacher.ts's
 // attachSupabaseAuth — registered as a global `functionMiddleware` in

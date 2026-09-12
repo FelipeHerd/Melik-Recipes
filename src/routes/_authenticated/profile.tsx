@@ -6,7 +6,7 @@ import { errorText, showError } from "@/lib/errors/toast";
 import { Crown, Download, KeyRound, LogOut, Shield, Trash2, Upload, X, CreditCard } from "lucide-react";
 import { useIsAdmin } from "@/lib/use-admin";
 import { changePassword } from "@/lib/auth/auth.functions";
-import { clearSession, getSession, useSessionUser } from "@/lib/auth/session.client";
+import { clearSession, getSession, useSessionUser } from "@/lib/auth/session-store";
 import { useModalA11y } from "@/hooks/use-modal-a11y";
 import { useRecipes } from "@/lib/recipes-context";
 import { deleteAccount, importRecipes } from "@/lib/recipes.functions";

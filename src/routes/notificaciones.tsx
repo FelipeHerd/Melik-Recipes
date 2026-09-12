@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, Check, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useSessionUser } from "@/lib/auth/session.client";
+import { useSessionUser } from "@/lib/auth/session-store";
 import {
   deleteNotification,
   listMyNotifications,

@@ -4,7 +4,7 @@ import { requireAuth } from "@/lib/auth/require-auth.server";
 import { USERNAME_DOT_FORBIDDEN, USERNAME_REGEX } from "@/lib/username.functions";
 
 // Session payload returned to the client on login/signup/resetPassword —
-// stored via src/lib/auth/session.client.ts's setSession().
+// stored via src/lib/auth/session-store.ts's setSession().
 export type AuthSession = {
   token: string;
   userId: string;

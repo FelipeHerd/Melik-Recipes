@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
-import { getSession } from "@/lib/auth/session.client";
+import { getSession } from "@/lib/auth/session-store";
 
 // ssr: false — this guard runs client-side only, so a synchronous localStorage
 // read is enough (no network round-trip like the old supabase.auth.getUser()

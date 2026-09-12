@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { useInfiniteQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { showError } from "@/lib/errors/toast";
-import { getSession, subscribeSession } from "@/lib/auth/session.client";
+import { getSession, subscribeSession } from "@/lib/auth/session-store";
 import {
   listRecipes,
   createRecipe as createRecipeFn,

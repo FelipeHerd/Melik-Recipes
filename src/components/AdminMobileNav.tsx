@@ -11,7 +11,7 @@ import {
   Bell,
   Menu,
 } from "lucide-react";
-import { clearSession } from "@/lib/auth/session.client";
+import { clearSession } from "@/lib/auth/session-store";
 import {
   Sheet,
   SheetContent,

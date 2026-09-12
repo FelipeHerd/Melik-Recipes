@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import type { AppErrorCode } from "./codes";
 import { toAppError } from "./map";
 import { ERRORS, REPORTABLE_ERROR_CODES } from "./catalog";
-import { getSession } from "@/lib/auth/session.client";
+import { getSession } from "@/lib/auth/session-store";
 import { reportError } from "@/lib/admin.functions";
 
 function composeDescription(app: {

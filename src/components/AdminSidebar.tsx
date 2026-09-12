@@ -1,7 +1,7 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { BarChart3, Users, Croissant, ArrowLeft, LogOut, Shield, Bell } from "lucide-react";
-import { clearSession } from "@/lib/auth/session.client";
+import { clearSession } from "@/lib/auth/session-store";
 
 const items = [
   { to: "/admin", label: "Métricas", icon: BarChart3, exact: true },

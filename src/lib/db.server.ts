@@ -25,3 +25,21 @@ export const db: Kysely<Database> = globalThis.__melikDb ?? createDb();
 if (process.env.NODE_ENV !== "production") {
   globalThis.__melikDb = db;
 }
+
+// node-postgres does NOT auto-serialize JS objects/arrays for jsonb columns
+// (a plain array is instead bound as a Postgres ARRAY literal and fails with
+// "invalid input syntax for type json") — always JSON.stringify a value
+// before writing it to a jsonb column (ingredients_json, instructions_json,
+// messages, metadata). Reads come back already parsed, no toJsonb needed.
+export function toJsonb(value: unknown): string {
+  return JSON.stringify(value);
+}
+
+// node-postgres returns timestamptz/date columns as JS Date objects, but
+// the client-side code across this app expects the ISO-string wire format
+// Supabase/PostgREST used to send — convert at each server function's
+// return boundary with this helper.
+export function isoOrNull(d: Date | string | null | undefined): string | null {
+  if (!d) return null;
+  return d instanceof Date ? d.toISOString() : d;
+}
