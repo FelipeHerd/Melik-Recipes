@@ -1,7 +1,7 @@
-// Chef AI server functions — Vision-enabled chat via Lovable AI Gateway.
+// Chef AI server functions — Vision-enabled chat via OpenAI.
 // Used by both /chef (FAB, ephemeral image) and /descubrir (persisted chat).
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireAuth } from "@/lib/auth/require-auth.server";
 import { z } from "zod";
 
 const messageBlockSchema = z.union([
@@ -36,49 +36,31 @@ function formatBlockedUntil(iso: string): string {
   }
 }
 
-async function assertKikoNotBlocked(
-  supabase: {
-    from: (t: string) => {
-      select: (c: string) => {
-        eq: (
-          k: string,
-          v: string,
-        ) => { maybeSingle: () => Promise<{ data: { kiko_blocked_until: string | null } | null }> };
-      };
-    };
-  },
-  userId: string,
-) {
-  const { data } = await supabase
-    .from("profiles")
-    .select("kiko_blocked_until")
-    .eq("id", userId)
-    .maybeSingle();
+async function assertKikoNotBlocked(userId: string) {
+  const { db } = await import("@/lib/db.server");
+  const data = await db.selectFrom("profiles").select(["kiko_blocked_until"]).where("id", "=", userId).executeTakeFirst();
   const until = data?.kiko_blocked_until;
   if (until && new Date(until) > new Date()) {
     throw new Error(
-      `APP-AI-005: Kiko está en pausa para tu cuenta hasta ${formatBlockedUntil(until)}.`,
+      `APP-AI-005: Kiko está en pausa para tu cuenta hasta ${formatBlockedUntil(until instanceof Date ? until.toISOString() : until)}.`,
     );
   }
 }
 
 async function logAiUsage(userId: string, kind: "chef" | "discover" | "title") {
   try {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.from("ai_usage").insert({ user_id: userId, kind });
+    const { db } = await import("@/lib/db.server");
+    await db.insertInto("ai_usage").values({ user_id: userId, kind }).execute();
   } catch {
     // fire-and-forget: nunca bloquear la respuesta al usuario.
   }
 }
 
 export const chefChat = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((input: unknown) => chatSchema.parse(input))
   .handler(async ({ data, context }) => {
-    await assertKikoNotBlocked(
-      context.supabase as unknown as Parameters<typeof assertKikoNotBlocked>[0],
-      context.userId,
-    );
+    await assertKikoNotBlocked(context.userId);
     const { chatCompletion } = await import("./ai-gateway.server");
     const messages = data.systemPrompt
       ? [{ role: "system" as const, content: data.systemPrompt }, ...data.messages]
@@ -131,7 +113,7 @@ function normalizeForGreeting(input: string): string {
   return input
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(new RegExp("[\u0300-\u036f]", "g"), "")
     .replace(/[¡!¿?.,;:()"'`~^@#$%&*_\-+=/\\|<>{}\[\]]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
@@ -153,13 +135,10 @@ function isTrivialOpener(text: string): boolean {
 // Returns { title: null, skipped: true } when the conversation is still
 // trivial (a greeting only) so callers can retry on later turns.
 export const generateChatTitle = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((input: unknown) => titleSchema.parse(input))
   .handler(async ({ data, context }): Promise<{ title: string | null; skipped: boolean }> => {
-    await assertKikoNotBlocked(
-      context.supabase as unknown as Parameters<typeof assertKikoNotBlocked>[0],
-      context.userId,
-    );
+    await assertKikoNotBlocked(context.userId);
 
     const userMessages = (data.recentUserMessages && data.recentUserMessages.length > 0)
       ? data.recentUserMessages
@@ -192,11 +171,13 @@ export const generateChatTitle = createServerFn({ method: "POST" })
         return { title: null, skipped: true };
       }
       const title = clean.slice(0, 60);
-      await context.supabase
-        .from("discover_chats")
-        .update({ title })
-        .eq("id", data.chatId)
-        .eq("user_id", context.userId);
+      const { db } = await import("@/lib/db.server");
+      await db
+        .updateTable("discover_chats")
+        .set({ title })
+        .where("id", "=", data.chatId)
+        .where("user_id", "=", context.userId)
+        .execute();
       void logAiUsage(context.userId, "title");
       return { title, skipped: false };
     } catch {

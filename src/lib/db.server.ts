@@ -2,6 +2,16 @@ import { Kysely, PostgresDialect } from "kysely";
 import pg from "pg";
 import type { Database } from "@/lib/db/types";
 
+// pg's default DATE (oid 1082) parser builds a Date anchored to the server's
+// LOCAL timezone, which can silently shift the calendar day by +/-1 depending
+// on the host's TZ (verified: inserting "2026-09-12" came back as
+// "2026-09-11T23:00:00.000Z" on a UTC+1 host). The only DATE column in this
+// schema (profiles.voice_usage_date) is compared as a plain "YYYY-MM-DD"
+// string against businessToday() (voice.server.ts), so disable parsing and
+// keep the raw string pg received from Postgres — this also matches what
+// Supabase/PostgREST used to send over the wire.
+pg.types.setTypeParser(1082, (value: string) => value);
+
 // Single Postgres connection pool for the whole app. There is no more
 // "browser client" vs "service-role client" split from the Supabase days —
 // every DB access now happens server-side, and authorization is enforced by

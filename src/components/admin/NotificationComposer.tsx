@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AlertTriangle, Loader2, Search, Send, ShieldCheck, Sparkles, Trash2, UserPlus, X } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { searchAdminUsersV2, type AdminCrmRow } from "@/lib/admin-crm.functions";
 import {
   listNotificationTemplates,

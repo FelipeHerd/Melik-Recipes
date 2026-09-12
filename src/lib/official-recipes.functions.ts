@@ -1,89 +1,43 @@
 // Server functions for the Melik Bakery premium catalog + dev premium toggle.
 // SECURITY:
 // - listOfficialRecipes is PUBLIC (guests can see the catalog), returns only
-//   safe columns via supabaseAdmin. Ingredients/instructions are NEVER
-//   exposed here.
-// - getOfficialRecipe requires auth AND is_premium = true. Otherwise it
-//   throws 402 Payment Required. The frontend never decides access.
+//   safe columns. Ingredients/instructions are NEVER exposed here.
+// - getOfficialRecipe requires auth AND is_premium_only unlock. Otherwise it
+//   returns a locked (redacted) DTO. The frontend never decides access.
 
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import {
-  parseIngredients,
-  parseSteps,
-  type Ingredient,
-  type Step,
-} from "@/lib/recipe-format";
+import { requireAuth } from "@/lib/auth/require-auth.server";
+import { parseIngredients, parseSteps, type Ingredient, type Step } from "@/lib/recipe-format";
 
 const IMAGE_BUCKET = "recipe-images";
 const SIGNED_URL_TTL = 60 * 60 * 24 * 7;
+const COVER_THUMB = { width: 640, height: 400, quality: 70 };
 
-type SignFn = (paths: string[]) => Promise<Map<string, string>>;
-
-function makeSigner(client: {
-  storage: {
-    from: (b: string) => {
-      createSignedUrls: (
-        p: string[],
-        ttl: number,
-      ) => Promise<{ data: Array<{ path: string | null; signedUrl: string | null }> | null }>;
-    };
-  };
-}): SignFn {
-  return async (paths) => {
-    const map = new Map<string, string>();
-    const unique = Array.from(new Set(paths.filter(Boolean)));
-    if (unique.length === 0) return map;
-    const { data } = await client.storage.from(IMAGE_BUCKET).createSignedUrls(unique, SIGNED_URL_TTL);
-    for (const s of data ?? []) {
-      if (s.path && s.signedUrl) map.set(s.path, s.signedUrl);
-    }
-    return map;
-  };
+async function signMany(paths: string[]): Promise<Map<string, string>> {
+  const { signPaths } = await import("@/lib/storage/signed-url.server");
+  const unique = Array.from(new Set(paths.filter(Boolean)));
+  return signPaths(IMAGE_BUCKET, unique, SIGNED_URL_TTL);
 }
 
-// Thumbnail signer for card lists (server-side transform: 640×400 q70).
+// Thumbnail signer for card lists — signs the pre-generated thumbnail when
+// present, falling back to the full-size original otherwise.
 async function signThumbnails(
-  client: {
-    storage: {
-      from: (b: string) => {
-        createSignedUrl: (
-          p: string,
-          ttl: number,
-          opts?: { transform?: { width?: number; height?: number; quality?: number; resize?: "cover" | "contain" | "fill" } },
-        ) => Promise<{ data: { signedUrl: string } | null }>;
-        createSignedUrls: (p: string[], ttl: number) => Promise<{ data: Array<{ path: string | null; signedUrl: string | null }> | null }>;
-      };
-    };
-  },
   paths: string[],
-  transform: { width: number; height: number; quality: number },
+  preset: { width: number; height: number; quality: number },
 ): Promise<Map<string, string>> {
+  const { signPath } = await import("@/lib/storage/signed-url.server");
+  const { fileExists } = await import("@/lib/storage/local-storage.server");
+  const { thumbnailPath } = await import("@/lib/storage/thumbnail.server");
   const map = new Map<string, string>();
   const unique = Array.from(new Set(paths.filter(Boolean)));
-  if (unique.length === 0) return map;
-  const bucket = client.storage.from(IMAGE_BUCKET);
-  const results = await Promise.all(
+  await Promise.all(
     unique.map(async (p) => {
-      try {
-        const { data } = await bucket.createSignedUrl(p, SIGNED_URL_TTL, {
-          transform: { ...transform, resize: "cover" },
-        });
-        return { path: p, url: data?.signedUrl ?? null };
-      } catch {
-        return { path: p, url: null };
-      }
+      const thumb = thumbnailPath(p, preset);
+      const hasThumb = await fileExists(IMAGE_BUCKET, thumb);
+      map.set(p, signPath(IMAGE_BUCKET, hasThumb ? thumb : p, SIGNED_URL_TTL));
     }),
   );
-  const missing = results.filter((r) => !r.url).map((r) => r.path);
-  if (missing.length > 0) {
-    const { data: fallback } = await bucket.createSignedUrls(missing, SIGNED_URL_TTL);
-    for (const s of fallback ?? []) {
-      if (s.path && s.signedUrl) map.set(s.path, s.signedUrl);
-    }
-  }
-  for (const r of results) if (r.url) map.set(r.path, r.url);
   return map;
 }
 
@@ -122,27 +76,23 @@ export const listOfficialRecipes = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<OfficialRecipesPage> => {
     const limit = data?.limit ?? 12;
     const cursor = data?.cursor ?? null;
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    let q = supabaseAdmin
-      .from("recipes")
-      .select(
-        "id, title, category, emoji, time_minutes, image_url, created_at, is_baker_mode, is_premium_only",
-      )
-      .eq("is_official_melik", true)
-      .eq("is_draft", false)
-      .order("created_at", { ascending: false })
+    const { db } = await import("@/lib/db.server");
+    let q = db
+      .selectFrom("recipes")
+      .select(["id", "title", "category", "emoji", "time_minutes", "image_url", "created_at", "is_baker_mode", "is_premium_only"])
+      .where("is_official_melik", "=", true)
+      .where("is_draft", "=", false)
+      .orderBy("created_at", "desc")
       .limit(limit + 1);
-    if (cursor) q = q.lt("created_at", cursor);
-    const { data: rows, error } = await q;
-    if (error) throw new Error("APP-SYS-001: " + error.message);
+    if (cursor) q = q.where("created_at", "<", new Date(cursor));
+    const rows = await q.execute();
 
-    const list = rows ?? [];
-    const hasMore = list.length > limit;
-    const trimmed = hasMore ? list.slice(0, limit) : list;
+    const hasMore = rows.length > limit;
+    const trimmed = hasMore ? rows.slice(0, limit) : rows;
     const nextCursor = hasMore ? new Date(trimmed[trimmed.length - 1].created_at).toISOString() : null;
 
     const paths = trimmed.map((r) => r.image_url).filter((p): p is string => !!p);
-    const signed = await signThumbnails(supabaseAdmin, paths, { width: 640, height: 400, quality: 70 });
+    const signed = await signThumbnails(paths, COVER_THUMB);
 
     const items: OfficialRecipeCardDto[] = trimmed.map((r) => ({
       id: r.id,
@@ -170,20 +120,30 @@ export type OfficialRecipeFullDto = OfficialRecipeCardDto & {
 };
 
 export const getOfficialRecipe = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((input: { id: string }) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }): Promise<OfficialRecipeFullDto> => {
-    void context; // silence unused when we don't need context.supabase directly
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: row, error } = await supabaseAdmin
-      .from("recipes")
-      .select(
-        "id, title, category, emoji, time_minutes, image_url, ingredients, instructions, ingredients_json, instructions_json, created_at, is_baker_mode, is_premium_only",
-      )
-      .eq("id", data.id)
-      .eq("is_official_melik", true)
-      .maybeSingle();
-    if (error) throw new Error("APP-SYS-001: " + error.message);
+    const { db } = await import("@/lib/db.server");
+    const row = await db
+      .selectFrom("recipes")
+      .select([
+        "id",
+        "title",
+        "category",
+        "emoji",
+        "time_minutes",
+        "image_url",
+        "ingredients",
+        "instructions",
+        "ingredients_json",
+        "instructions_json",
+        "created_at",
+        "is_baker_mode",
+        "is_premium_only",
+      ])
+      .where("id", "=", data.id)
+      .where("is_official_melik", "=", true)
+      .executeTakeFirst();
     if (!row) throw new Error("APP-RCP-001: not found");
 
     // Server-Side Redaction: ingredientes + pasos salen del servidor como []
@@ -192,30 +152,25 @@ export const getOfficialRecipe = createServerFn({ method: "POST" })
     // presentacional — los datos sensibles nunca cruzaron el cable.
     let isLocked = false;
     if (row.is_premium_only) {
-      const { data: unlock } = await supabaseAdmin
-        .from("bakery_unlocks")
-        .select("user_id")
-        .eq("user_id", context.userId)
-        .eq("recipe_id", row.id)
-        .maybeSingle();
+      const unlock = await db
+        .selectFrom("bakery_unlocks")
+        .select(["user_id"])
+        .where("user_id", "=", context.userId)
+        .where("recipe_id", "=", row.id)
+        .executeTakeFirst();
       isLocked = !unlock;
     }
 
-
-    const sign = makeSigner(supabaseAdmin);
     const paths: string[] = [];
     if (row.image_url) paths.push(row.image_url);
 
-    let ingredients: Ingredient[] = [];
-    let instructions: Step[] = [];
     if (!isLocked) {
-      ingredients =
+      const ingredients: Ingredient[] =
         row.ingredients_json != null ? parseIngredients(row.ingredients_json) : parseIngredients(row.ingredients);
-      const stepsRaw =
-        row.instructions_json != null ? parseSteps(row.instructions_json) : parseSteps(row.instructions);
+      const stepsRaw = row.instructions_json != null ? parseSteps(row.instructions_json) : parseSteps(row.instructions);
       for (const s of stepsRaw) if (s.imagePath) paths.push(s.imagePath);
-      const signed = await sign(paths);
-      instructions = stepsRaw.map((s) => ({
+      const signed = await signMany(paths);
+      const instructions: Step[] = stepsRaw.map((s) => ({
         text: s.text,
         imagePath: s.imagePath ?? null,
         imageUrl: s.imagePath ? signed.get(s.imagePath) ?? null : null,
@@ -238,7 +193,7 @@ export const getOfficialRecipe = createServerFn({ method: "POST" })
       };
     }
 
-    const signed = await sign(paths);
+    const signed = await signMany(paths);
     return {
       id: row.id,
       title: row.title,
@@ -260,31 +215,17 @@ export const getOfficialRecipe = createServerFn({ method: "POST" })
 // DEV ONLY — toggle current user's premium flag for local testing.
 // TODO: remove in Fase 4 when real subscriptions land.
 export const toggleDevPremium = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .handler(async ({ context }) => {
     const { assertDevOrReject } = await import("./dev-guard.server");
     await assertDevOrReject(context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: current, error: readErr } = await supabaseAdmin
-      .from("profiles")
-      .select("is_premium")
-      .eq("id", context.userId)
-      .maybeSingle();
-    if (readErr) throw new Error("APP-SYS-001: " + readErr.message);
+    const { db } = await import("@/lib/db.server");
+    const current = await db.selectFrom("profiles").select(["is_premium"]).where("id", "=", context.userId).executeTakeFirst();
     const next = !(current?.is_premium ?? false);
-    const { error } = await supabaseAdmin
-      .from("profiles")
-      .update({ is_premium: next })
-      .eq("id", context.userId);
-    if (error) throw new Error("APP-SYS-001: " + error.message);
+    await db.updateTable("profiles").set({ is_premium: next }).where("id", "=", context.userId).execute();
 
     const { sendTemplatedNotification } = await import("./notifications.server");
-    await sendTemplatedNotification(
-      context.userId,
-      next ? "dev_plus_granted" : "dev_plus_revoked",
-      {},
-      { initiatedBySelf: true },
-    );
+    await sendTemplatedNotification(context.userId, next ? "dev_plus_granted" : "dev_plus_revoked", {}, { initiatedBySelf: true });
     return { isPremium: next };
   });
 
@@ -293,40 +234,23 @@ export const toggleDevPremium = createServerFn({ method: "POST" })
 // valor actual si es futuro). `null`: revoca el trial. Solo cuentas con rol dev.
 
 export const grantSelfDevTrial = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
-    z.object({ days: z.number().int().min(-1).max(365).nullable() }).parse(input),
-  )
+  .middleware([requireAuth])
+  .inputValidator((input: unknown) => z.object({ days: z.number().int().min(-1).max(365).nullable() }).parse(input))
   .handler(async ({ data, context }): Promise<{ premiumUntil: string | null }> => {
     const { assertDevOrReject } = await import("./dev-guard.server");
     await assertDevOrReject(context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { db } = await import("@/lib/db.server");
 
     if (data.days === null) {
-      const { error } = await supabaseAdmin
-        .from("profiles")
-        .update({ premium_until: null })
-        .eq("id", context.userId);
-      if (error) throw new Error("APP-SYS-001: " + error.message);
+      await db.updateTable("profiles").set({ premium_until: null }).where("id", "=", context.userId).execute();
       return { premiumUntil: null };
     }
 
-    const { data: cur } = await supabaseAdmin
-      .from("profiles")
-      .select("premium_until")
-      .eq("id", context.userId)
-      .maybeSingle();
-    const base =
-      cur?.premium_until && new Date(cur.premium_until) > new Date()
-        ? new Date(cur.premium_until)
-        : new Date();
+    const cur = await db.selectFrom("profiles").select(["premium_until"]).where("id", "=", context.userId).executeTakeFirst();
+    const base = cur?.premium_until && new Date(cur.premium_until) > new Date() ? new Date(cur.premium_until) : new Date();
     base.setUTCDate(base.getUTCDate() + data.days);
     const iso = base.toISOString();
-    const { error } = await supabaseAdmin
-      .from("profiles")
-      .update({ premium_until: iso })
-      .eq("id", context.userId);
-    if (error) throw new Error("APP-SYS-001: " + error.message);
+    await db.updateTable("profiles").set({ premium_until: iso }).where("id", "=", context.userId).execute();
 
     const { sendTemplatedNotification } = await import("./notifications.server");
     const dias = data.days === 1 ? "1 día" : `${data.days} días`;
@@ -335,13 +259,6 @@ export const grantSelfDevTrial = createServerFn({ method: "POST" })
       month: "short",
       year: "numeric",
     });
-    await sendTemplatedNotification(
-      context.userId,
-      "dev_trial_granted",
-      { duracion: dias, fecha_fin: fechaFin },
-      { initiatedBySelf: true },
-    );
+    await sendTemplatedNotification(context.userId, "dev_trial_granted", { duracion: dias, fecha_fin: fechaFin }, { initiatedBySelf: true });
     return { premiumUntil: iso };
   });
-
-

@@ -122,7 +122,7 @@ export function MelikPlusCheckoutModal({
         message:
           "No fue posible comunicarse con el servidor de la pasarela de pagos. Por favor verifica tu conexión e intenta de nuevo.",
         provider,
-        rawError: err,
+        rawError: err instanceof Error ? err.message : String(err),
       });
       setStatus("error");
     }
