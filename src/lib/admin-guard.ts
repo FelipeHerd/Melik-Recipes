@@ -8,7 +8,7 @@
 
 import { redirect, isRedirect } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { getSession } from "@/lib/auth/session.client";
 import { checkIsAdmin } from "@/lib/admin.functions";
 import type { QueryClient } from "@tanstack/react-query";
 
@@ -33,13 +33,8 @@ function bounceHome(reason: "no-session" | "not-admin" | "error"): never {
  *     leaves the user staring at a veiled admin shell.
  */
 export async function assertAdminOrRedirect(queryClient?: QueryClient): Promise<void> {
-  let userId: string | null = null;
-  try {
-    const { data } = await supabase.auth.getSession();
-    userId = data.session?.user?.id ?? null;
-  } catch {
-    bounceHome("error");
-  }
+  const session = getSession();
+  const userId = session && session.exp * 1000 > Date.now() ? session.userId : null;
   if (!userId) bounceHome("no-session");
 
   if (queryClient) {

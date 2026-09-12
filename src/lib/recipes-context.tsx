@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { useInfiniteQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { showError } from "@/lib/errors/toast";
-import { supabase } from "@/integrations/supabase/client";
+import { getSession, subscribeSession } from "@/lib/auth/session.client";
 import {
   listRecipes,
   createRecipe as createRecipeFn,
@@ -149,22 +149,23 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
   const [pendingGuestMigration, setPendingGuestMigration] = useState<Recipe[]>([]);
 
   useEffect(() => {
-    let mounted = true;
-    supabase.auth.getUser().then(({ data }) => {
-      if (!mounted) return;
-      const uid = data.user?.id ?? null;
-      setUserId(uid);
-      setAuthReady(true);
-      // On initial load: if user already authenticated and there are guest leftovers, prompt.
-      if (uid) {
-        const pending = loadGuest();
-        if (pending.length > 0) setPendingGuestMigration(pending);
-      }
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange(async (event, session) => {
-      const newId = session?.user?.id ?? null;
+    const initialUid = getSession()?.userId ?? null;
+    setUserId(initialUid);
+    setAuthReady(true);
+    // On initial load: if user already authenticated and there are guest leftovers, prompt.
+    if (initialUid) {
+      const pending = loadGuest();
+      if (pending.length > 0) setPendingGuestMigration(pending);
+    }
+
+    let previousId = initialUid;
+    return subscribeSession(() => {
+      const newId = getSession()?.userId ?? null;
+      if (newId === previousId) return;
+      const wasSignedIn = !!previousId;
+      previousId = newId;
       setUserId(newId);
-      if (event === "SIGNED_IN" && newId) {
+      if (newId && !wasSignedIn) {
         const pending = loadGuest();
         if (pending.length > 0) {
           setPendingGuestMigration(pending);
@@ -175,17 +176,13 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
         queryClient.invalidateQueries({ queryKey: ["recipes"] });
         queryClient.invalidateQueries({ queryKey: ["profile"] });
       }
-      if (event === "SIGNED_OUT") {
+      if (!newId) {
         setPendingGuestMigration([]);
         queryClient.removeQueries({ queryKey: ["recipes"] });
         queryClient.removeQueries({ queryKey: ["profile"] });
         queryClient.removeQueries({ queryKey: ["notifications"] });
       }
     });
-    return () => {
-      mounted = false;
-      sub.subscription.unsubscribe();
-    };
   }, [queryClient]);
 
   useEffect(() => {

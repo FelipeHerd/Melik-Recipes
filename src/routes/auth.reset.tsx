@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowLeft } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { requestPasswordReset } from "@/lib/auth/auth.functions";
 
 export const Route = createFileRoute("/auth/reset")({
   head: () => ({
@@ -26,11 +26,9 @@ function ResetPage() {
     if (!email.trim()) return;
     setLoading(true);
     try {
-      await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: window.location.origin + "/auth/update-password",
-      });
+      await requestPasswordReset({ data: { email: email.trim() } });
     } catch {
-      // swallow — same UX either way
+      // swallow — same UX either way, never reveal whether the email exists
     }
     setLoading(false);
     setSent(true);

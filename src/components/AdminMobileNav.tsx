@@ -11,7 +11,7 @@ import {
   Bell,
   Menu,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { clearSession } from "@/lib/auth/session.client";
 import {
   Sheet,
   SheetContent,
@@ -36,7 +36,7 @@ export function AdminMobileNav() {
   async function handleSignOut() {
     await queryClient.cancelQueries();
     queryClient.clear();
-    await supabase.auth.signOut();
+    clearSession();
     setOpen(false);
     navigate({ to: "/auth-admin", replace: true });
   }

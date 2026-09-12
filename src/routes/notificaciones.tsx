@@ -1,10 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, Check, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { useSessionUser } from "@/lib/auth/session.client";
 import {
   deleteNotification,
   listMyNotifications,
@@ -52,20 +51,7 @@ function NotificationsPage() {
 
   // userId scoped: evita mostrar datos del usuario anterior en la misma pestaña
   // si Auth cambia sin recarga. Query desactivada hasta que resuelva.
-  const [userId, setUserId] = useState<string | null>(null);
-  useEffect(() => {
-    let mounted = true;
-    supabase.auth.getUser().then(({ data }) => {
-      if (mounted) setUserId(data.user?.id ?? null);
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      setUserId(session?.user?.id ?? null);
-    });
-    return () => {
-      mounted = false;
-      sub.subscription.unsubscribe();
-    };
-  }, []);
+  const { userId } = useSessionUser();
 
   const listKey = ["notifications", "mine", userId] as const;
   const countKey = ["notifications", "unreadCount", userId] as const;

@@ -5,8 +5,8 @@ import { toast } from "sonner";
 import { errorText, showError } from "@/lib/errors/toast";
 import { Crown, Download, KeyRound, LogOut, Shield, Trash2, Upload, X, CreditCard } from "lucide-react";
 import { useIsAdmin } from "@/lib/use-admin";
-import { supabase } from "@/integrations/supabase/client";
-import { useSessionUser } from "@/components/UserMenu";
+import { changePassword } from "@/lib/auth/auth.functions";
+import { clearSession, getSession, useSessionUser } from "@/lib/auth/session.client";
 import { useModalA11y } from "@/hooks/use-modal-a11y";
 import { useRecipes } from "@/lib/recipes-context";
 import { deleteAccount, importRecipes } from "@/lib/recipes.functions";
@@ -55,7 +55,7 @@ function ProfilePage() {
 
   const [email, setEmail] = useState<string | null>(null);
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? null));
+    setEmail(getSession()?.email ?? null);
   }, []);
 
   const [pwOpen, setPwOpen] = useState(false);
@@ -73,7 +73,7 @@ function ProfilePage() {
   async function handleSignOut() {
     await queryClient.cancelQueries();
     queryClient.clear();
-    await supabase.auth.signOut();
+    clearSession();
     await router.invalidate();
     navigate({ to: "/", replace: true });
   }
@@ -87,15 +87,14 @@ function ProfilePage() {
     }
     await queryClient.cancelQueries();
     queryClient.clear();
-    try {
-      await supabase.auth.signOut({ scope: "global" });
-    } catch {
-      /* ignore */
-    }
+    // The account row is already gone server-side (cascades to every table),
+    // so no server round-trip is needed to invalidate sessions — just drop
+    // the local token.
+    clearSession();
     try {
       const keys = Object.keys(localStorage);
       for (const k of keys) {
-        if (k.startsWith("sb-") || k === "meliks.recipes.guest.v1" || k === "meliks.recipes.v1") {
+        if (k === "meliks.recipes.guest.v1" || k === "meliks.recipes.v1") {
           localStorage.removeItem(k);
         }
       }
@@ -777,12 +776,14 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.updateUser({ password });
-    setLoading(false);
-    if (error) {
-      setError(errorText(error));
+    try {
+      await changePassword({ data: { password } });
+    } catch (err) {
+      setLoading(false);
+      setError(errorText(err));
       return;
     }
+    setLoading(false);
     toast.success("Contraseña actualizada");
     onClose();
   }

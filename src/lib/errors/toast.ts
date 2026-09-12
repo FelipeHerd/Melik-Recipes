@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import type { AppErrorCode } from "./codes";
 import { toAppError } from "./map";
 import { ERRORS, REPORTABLE_ERROR_CODES } from "./catalog";
-import { supabase } from "@/integrations/supabase/client";
+import { getSession } from "@/lib/auth/session.client";
 import { reportError } from "@/lib/admin.functions";
 
 function composeDescription(app: {
@@ -25,8 +25,7 @@ async function sendReport(app: {
   description?: string;
 }) {
   // Guard: sin sesión no permitimos reportes (evita spam anónimo).
-  const { data: sess } = await supabase.auth.getSession();
-  if (!sess.session) {
+  if (!getSession()) {
     toast.error("Inicia sesión para reportar");
     return;
   }

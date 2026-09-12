@@ -3,7 +3,8 @@ import { useNavigate, useRouter } from "@tanstack/react-router";
 import { z } from "zod";
 import { toast } from "sonner";
 import { errorText } from "@/lib/errors/toast";
-import { supabase } from "@/integrations/supabase/client";
+import { signup } from "@/lib/auth/auth.functions";
+import { setSession } from "@/lib/auth/session.client";
 import { PasswordChecklist, isPasswordStrong } from "@/components/PasswordChecklist";
 import { UsernameField, type UsernameStatus } from "@/components/UsernameField";
 import { USERNAME_REGEX } from "@/lib/username.functions";
@@ -34,7 +35,6 @@ export default function SignUpForm({ redirectTo }: { redirectTo: string }) {
   const [accepted, setAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pendingVerification, setPendingVerification] = useState(false);
 
   const canSubmit =
     accepted &&
@@ -45,29 +45,17 @@ export default function SignUpForm({ redirectTo }: { redirectTo: string }) {
     email.trim() &&
     usernameStatus === "available";
 
-  // Clear any error/verification banner as soon as the user edits any field.
+  // Clear any error banner as soon as the user edits any field.
   function clearOnChange<T>(setter: (v: T) => void) {
     return (v: T) => {
       if (error) setError(null);
-      if (pendingVerification) setPendingVerification(false);
       setter(v);
     };
-  }
-
-  function resetForm() {
-    setFirstName("");
-    setLastName("");
-    setUsername("");
-    setEmail("");
-    setPassword("");
-    setConfirm("");
-    setAccepted(false);
   }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setPendingVerification(false);
     const parsed = signUpSchema.safeParse({ firstName, lastName, username, email, password, confirm, accepted });
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message ?? "Revisa los datos");
@@ -82,28 +70,17 @@ export default function SignUpForm({ redirectTo }: { redirectTo: string }) {
       return;
     }
     setLoading(true);
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: window.location.origin,
-        data: { first_name: firstName.trim(), last_name: lastName.trim(), username },
-      },
-    });
-    setLoading(false);
-    if (error) {
-      setError(errorText(error));
-      return;
-    }
-    if (!data.session) {
-      // Email confirmation required — do NOT redirect.
-      resetForm();
-      setPendingVerification(true);
-      toast.success("Revisa tu bandeja de entrada para verificar tu cuenta antes de iniciar sesión.", {
-        duration: Infinity,
+    try {
+      const session = await signup({
+        data: { firstName: firstName.trim(), lastName: lastName.trim(), username, email, password },
       });
+      setSession(session);
+    } catch (err) {
+      setLoading(false);
+      setError(errorText(err));
       return;
     }
+    setLoading(false);
     toast.success("Cuenta creada con éxito");
     await router.invalidate();
     navigate({ to: redirectTo });
@@ -194,18 +171,6 @@ export default function SignUpForm({ redirectTo }: { redirectTo: string }) {
       </label>
 
       {error && <p className="rounded-xl bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</p>}
-      {pendingVerification && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="rounded-xl border border-primary/30 bg-primary/5 px-3 py-3 text-xs text-foreground/80"
-        >
-          <p className="font-medium text-primary">Verifica tu correo</p>
-          <p className="mt-1">
-            Te enviamos un enlace de confirmación. Revisa tu bandeja de entrada (y la carpeta de spam) antes de iniciar sesión.
-          </p>
-        </div>
-      )}
 
       <button
         type="submit"

@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Crown, LogIn, LogOut, User as UserIcon } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { clearSession, useSessionUser } from "@/lib/auth/session.client";
 import { getProfile } from "@/lib/recipes.functions";
 import melikBakeryLogo from "@/assets/melik-bakery-logo.png.asset.json";
 import {
@@ -14,30 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export function useSessionUser() {
-  const [userId, setUserId] = useState<string | null>(null);
-  const [ready, setReady] = useState(false);
-  useEffect(() => {
-    let mounted = true;
-    // getSession() reads from localStorage (no HTTP round-trip) but the
-    // Supabase v2 API returns a Promise, so we resolve it before flipping
-    // `ready` to true.
-    supabase.auth.getSession().then(({ data }) => {
-      if (!mounted) return;
-      setUserId(data.session?.user?.id ?? null);
-      setReady(true);
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!mounted) return;
-      setUserId(session?.user?.id ?? null);
-    });
-    return () => {
-      mounted = false;
-      sub.subscription.unsubscribe();
-    };
-  }, []);
-  return { userId, ready };
-}
+export { useSessionUser };
 
 export function initialsOf(first?: string | null, last?: string | null, email?: string | null) {
   const f = (first ?? "").trim();
@@ -93,7 +69,7 @@ export function UserMenu({ compact = false }: { compact?: boolean } = {}) {
   async function handleSignOut() {
     await queryClient.cancelQueries();
     queryClient.clear();
-    await supabase.auth.signOut();
+    clearSession();
     await router.invalidate();
     navigate({ to: "/", replace: true });
   }

@@ -1,11 +1,14 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { errorText } from "@/lib/errors/toast";
-import { supabase } from "@/integrations/supabase/client";
+import { resetPassword } from "@/lib/auth/auth.functions";
 import { PasswordChecklist, isPasswordStrong } from "@/components/PasswordChecklist";
 
 export const Route = createFileRoute("/auth/update-password")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    token: typeof search.token === "string" ? search.token : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Nueva contraseña — Melik Recipes" },
@@ -21,6 +24,7 @@ export const Route = createFileRoute("/auth/update-password")({
 
 function UpdatePasswordPage() {
   const navigate = useNavigate();
+  const { token } = useSearch({ from: "/auth/update-password" });
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
@@ -29,6 +33,10 @@ function UpdatePasswordPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!token) {
+      setError("Enlace inválido o expirado");
+      return;
+    }
     if (!isPasswordStrong(password)) {
       setError("La contraseña no cumple los requisitos");
       return;
@@ -38,14 +46,16 @@ function UpdatePasswordPage() {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.updateUser({ password });
-    setLoading(false);
-    if (error) {
-      setError(errorText(error));
+    try {
+      await resetPassword({ data: { token, password } });
+    } catch (err) {
+      setLoading(false);
+      setError(errorText(err));
       return;
     }
+    setLoading(false);
     toast.success("Contraseña actualizada");
-    navigate({ to: "/" });
+    navigate({ to: "/auth" });
   }
 
   return (

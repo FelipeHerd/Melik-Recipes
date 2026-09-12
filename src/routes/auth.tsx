@@ -2,7 +2,8 @@ import { createFileRoute, Link, useNavigate, useRouter, useSearch } from "@tanst
 import { Suspense, lazy, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { login } from "@/lib/auth/auth.functions";
+import { setSession } from "@/lib/auth/session.client";
 import { AuthField, authInputClass } from "@/components/AuthField";
 import { AuthPageSkeleton, AuthSkeleton } from "@/components/AuthSkeleton";
 import melikLogo from "@/assets/melik-logo.png.asset.json";
@@ -115,12 +116,15 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) {
+    try {
+      const session = await login({ data: { email, password } });
+      setSession(session);
+    } catch {
+      setLoading(false);
       setError("Correo o contraseña incorrectos");
       return;
     }
+    setLoading(false);
     toast.success("¡Bienvenido de vuelta!");
     await router.invalidate();
     navigate({ to: redirectTo });
