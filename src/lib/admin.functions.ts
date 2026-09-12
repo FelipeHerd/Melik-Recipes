@@ -1,35 +1,30 @@
 // Admin & notifications server functions.
 // Protected calls check role via `assertAdmin` (admin ONLY — dev accounts do
-// NOT get panel access). Report/notification reads and writes for the current
-// user go through RLS.
+// NOT get panel access). Report/notification reads and writes for the
+// current user are scoped by an explicit `user_id` filter on every query,
+// replacing what Supabase RLS used to enforce implicitly.
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireAuth } from "@/lib/auth/require-auth.server";
 import { z } from "zod";
 
 type Role = "user" | "admin" | "dev";
 
 async function callerRole(userId: string): Promise<Role> {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data: adminRow } = await supabaseAdmin
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .in("role", ["admin", "dev"]);
-  const roles = (adminRow ?? []).map((r) => r.role);
+  const { db } = await import("@/lib/db.server");
+  const rows = await db
+    .selectFrom("user_roles")
+    .select(["role"])
+    .where("user_id", "=", userId)
+    .where("role", "in", ["admin", "dev"])
+    .execute();
+  const roles = rows.map((r) => r.role);
   if (roles.includes("admin")) return "admin";
   if (roles.includes("dev")) return "dev";
   return "user";
 }
 
-async function assertAdmin(userId: string) {
-  const role = await callerRole(userId);
-  if (role !== "admin") {
-    throw new Error("APP-PERM-002: forbidden");
-  }
-}
-
 export const checkIsAdmin = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .handler(async ({ context }): Promise<{ isAdmin: boolean; isDev: boolean; role: Role }> => {
     const role = await callerRole(context.userId);
     return { isAdmin: role === "admin", isDev: role === "dev", role };
@@ -43,26 +38,30 @@ export type AdminStats = {
 };
 
 export const getAdminStats = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .handler(async ({ context }): Promise<AdminStats> => {
+    const { assertAdmin } = await import("@/lib/auth/authorize.server");
     await assertAdmin(context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { db } = await import("@/lib/db.server");
+    const { sql } = await import("kysely");
 
-    const [profilesCount, recipesCount, officialCount] = await Promise.all([
-      supabaseAdmin.from("profiles").select("*", { count: "exact", head: true }),
-      supabaseAdmin
-        .from("recipes")
-        .select("*", { count: "exact", head: true })
-        .eq("is_official_melik", false),
-      supabaseAdmin
-        .from("recipes")
-        .select("*", { count: "exact", head: true })
-        .eq("is_official_melik", true),
+    const [usersRow, recipesRow, officialRow] = await Promise.all([
+      db.selectFrom("profiles").select(sql<number>`count(*)`.as("count")).executeTakeFirstOrThrow(),
+      db
+        .selectFrom("recipes")
+        .select(sql<number>`count(*)`.as("count"))
+        .where("is_official_melik", "=", false)
+        .executeTakeFirstOrThrow(),
+      db
+        .selectFrom("recipes")
+        .select(sql<number>`count(*)`.as("count"))
+        .where("is_official_melik", "=", true)
+        .executeTakeFirstOrThrow(),
     ]);
 
-    const totalUsers = profilesCount.count ?? 0;
-    const totalRecipes = recipesCount.count ?? 0;
-    const officialRecipes = officialCount.count ?? 0;
+    const totalUsers = Number(usersRow.count);
+    const totalRecipes = Number(recipesRow.count);
+    const officialRecipes = Number(officialRow.count);
     const avg = totalUsers > 0 ? totalRecipes / totalUsers : 0;
 
     return {
@@ -85,40 +84,33 @@ export type AdminUserRow = {
 };
 
 export const searchAdminUsers = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((input: unknown) => searchSchema.parse(input))
   .handler(async ({ data, context }): Promise<AdminUserRow[]> => {
+    const { assertAdmin } = await import("@/lib/auth/authorize.server");
     await assertAdmin(context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { db } = await import("@/lib/db.server");
+    const { searchUsersByEmail } = await import("@/lib/auth/admin-users.server");
 
-    const needle = data.email.toLowerCase();
-    const { data: usersRes, error } = await supabaseAdmin.auth.admin.listUsers({
-      page: 1,
-      perPage: 200,
-    });
-    if (error) throw new Error("APP-SYS-001: " + error.message);
-    const matches = (usersRes.users ?? [])
-      .filter((u) => (u.email ?? "").toLowerCase().includes(needle))
-      .slice(0, 25);
+    const matches = await searchUsersByEmail(data.email.toLowerCase(), 25);
     if (matches.length === 0) return [];
 
     const ids = matches.map((u) => u.id);
-    const [{ data: profs }, { data: roles }, { data: recipes }] = await Promise.all([
-      supabaseAdmin.from("profiles").select("id, first_name, last_name, is_premium").in("id", ids),
-      supabaseAdmin.from("user_roles").select("user_id, role").in("user_id", ids),
-      supabaseAdmin
-        .from("recipes")
-        .select("user_id")
-        .in("user_id", ids)
-        .eq("is_official_melik", false),
+    const [profs, roles, recipes] = await Promise.all([
+      db.selectFrom("profiles").select(["id", "first_name", "last_name", "is_premium"]).where("id", "in", ids).execute(),
+      db.selectFrom("user_roles").select(["user_id", "role"]).where("user_id", "in", ids).execute(),
+      db
+        .selectFrom("recipes")
+        .select(["user_id"])
+        .where("user_id", "in", ids)
+        .where("is_official_melik", "=", false)
+        .execute(),
     ]);
 
-    const profMap = new Map((profs ?? []).map((p) => [p.id, p]));
-    const adminSet = new Set(
-      (roles ?? []).filter((r) => r.role === "admin").map((r) => r.user_id),
-    );
+    const profMap = new Map(profs.map((p) => [p.id, p]));
+    const adminSet = new Set(roles.filter((r) => r.role === "admin").map((r) => r.user_id));
     const countMap = new Map<string, number>();
-    for (const r of recipes ?? []) {
+    for (const r of recipes) {
       countMap.set(r.user_id, (countMap.get(r.user_id) ?? 0) + 1);
     }
 
@@ -140,7 +132,6 @@ export const searchAdminUsers = createServerFn({ method: "POST" })
 // admin — the only path to the admin role is `setUserRole` invoked by an
 // existing admin from /admin/usuarios.
 
-
 // -------------------------- Error reports -----------------------------------
 
 const reportSchema = z.object({
@@ -150,29 +141,33 @@ const reportSchema = z.object({
 });
 
 export const reportError = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((input: unknown) => reportSchema.parse(input))
   .handler(async ({ data, context }): Promise<{ ok: true }> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { db } = await import("@/lib/db.server");
+    const { sql } = await import("kysely");
 
     // Rate limit blando: máx 20 reportes por hora por usuario.
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-    const { count } = await supabaseAdmin
-      .from("error_reports")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", context.userId)
-      .gte("created_at", oneHourAgo);
-    if ((count ?? 0) >= 20) {
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    const { count } = await db
+      .selectFrom("error_reports")
+      .select(sql<number>`count(*)`.as("count"))
+      .where("user_id", "=", context.userId)
+      .where("created_at", ">=", oneHourAgo)
+      .executeTakeFirstOrThrow();
+    if (Number(count) >= 20) {
       throw new Error("APP-AUTH-004: too many reports");
     }
 
-    const { error } = await context.supabase.from("error_reports").insert({
-      user_id: context.userId,
-      error_message: data.error_message,
-      route: data.route || null,
-      error_code: data.error_code || null,
-    });
-    if (error) throw new Error("APP-SYS-001: " + error.message);
+    await db
+      .insertInto("error_reports")
+      .values({
+        user_id: context.userId,
+        error_message: data.error_message,
+        route: data.route || null,
+        error_code: data.error_code || null,
+      })
+      .execute();
     return { ok: true };
   });
 
@@ -189,22 +184,19 @@ const sendNotifSchema = z.object({
 });
 
 export const sendNotification = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((input: unknown) => sendNotifSchema.parse(input))
   .handler(async ({ data, context }): Promise<{ ok: true; id: string }> => {
+    const { assertAdmin } = await import("@/lib/auth/authorize.server");
     await assertAdmin(context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: row, error } = await supabaseAdmin
-      .from("notifications")
-      .insert({
-        user_id: data.userId,
-        title: data.title,
-        message: data.message,
-        type: data.type,
-      })
-      .select("id")
-      .single();
-    if (error) throw new Error("APP-SYS-001: " + error.message);
+    const { db } = await import("@/lib/db.server");
+    const row = await db
+      .insertInto("notifications")
+      .values({ user_id: data.userId, title: data.title, message: data.message, type: data.type })
+      .returning(["id"])
+      .executeTakeFirstOrThrow();
+    // TODO(realtime phase): push a WS event to data.userId here — see
+    // migration plan Section 3.7 / src/lib/realtime/notify.server.ts.
     return { ok: true, id: row.id };
   });
 
@@ -218,55 +210,55 @@ export type NotificationRow = {
 };
 
 export const listMyNotifications = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .handler(async ({ context }): Promise<NotificationRow[]> => {
-    const { data, error } = await context.supabase
-      .from("notifications")
-      .select("id, title, message, type, is_read, created_at")
-      .eq("user_id", context.userId)
-      .order("created_at", { ascending: false })
-      .limit(100);
-    if (error) throw new Error("APP-SYS-001: " + error.message);
-    return (data ?? []) as NotificationRow[];
+    const { db, isoOrNull } = await import("@/lib/db.server");
+    const rows = await db
+      .selectFrom("notifications")
+      .select(["id", "title", "message", "type", "is_read", "created_at"])
+      .where("user_id", "=", context.userId)
+      .orderBy("created_at", "desc")
+      .limit(100)
+      .execute();
+    return rows.map((r) => ({ ...r, created_at: isoOrNull(r.created_at) as string }));
   });
 
 const notifIdSchema = z.object({ id: z.string().uuid() });
 
 export const markNotificationRead = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((input: unknown) => notifIdSchema.parse(input))
   .handler(async ({ data, context }): Promise<{ ok: true }> => {
-    const { error } = await context.supabase
-      .from("notifications")
-      .update({ is_read: true })
-      .eq("id", data.id)
-      .eq("user_id", context.userId);
-    if (error) throw new Error("APP-SYS-001: " + error.message);
+    const { db } = await import("@/lib/db.server");
+    await db
+      .updateTable("notifications")
+      .set({ is_read: true })
+      .where("id", "=", data.id)
+      .where("user_id", "=", context.userId)
+      .execute();
     return { ok: true };
   });
 
 export const deleteNotification = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((input: unknown) => notifIdSchema.parse(input))
   .handler(async ({ data, context }): Promise<{ ok: true }> => {
-    const { error } = await context.supabase
-      .from("notifications")
-      .delete()
-      .eq("id", data.id)
-      .eq("user_id", context.userId);
-    if (error) throw new Error("APP-SYS-001: " + error.message);
+    const { db } = await import("@/lib/db.server");
+    await db.deleteFrom("notifications").where("id", "=", data.id).where("user_id", "=", context.userId).execute();
     return { ok: true };
   });
 
-// Contador liviano para el badge de la campana. Head + count evita descargar filas.
+// Contador liviano para el badge de la campana.
 export const getMyUnreadNotificationsCount = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .handler(async ({ context }): Promise<{ count: number }> => {
-    const { count, error } = await context.supabase
-      .from("notifications")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", context.userId)
-      .eq("is_read", false);
-    if (error) throw new Error("APP-SYS-001: " + error.message);
-    return { count: count ?? 0 };
+    const { db } = await import("@/lib/db.server");
+    const { sql } = await import("kysely");
+    const { count } = await db
+      .selectFrom("notifications")
+      .select(sql<number>`count(*)`.as("count"))
+      .where("user_id", "=", context.userId)
+      .where("is_read", "=", false)
+      .executeTakeFirstOrThrow();
+    return { count: Number(count) };
   });
