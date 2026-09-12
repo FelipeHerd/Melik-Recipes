@@ -1,7 +1,7 @@
 // Admin CRM — Tab 2: search, block Kiko, grant trials, change role, impersonate.
 // All calls: requireAuth → assertAdmin (admin ONLY; dev is NOT admin) → db → audit.
 import { createServerFn } from "@tanstack/react-start";
-import { requireAuth } from "@/lib/auth/require-auth.server";
+import { requireAuth } from "@/lib/auth/require-auth";
 import { z } from "zod";
 
 type Role = "user" | "admin" | "dev";

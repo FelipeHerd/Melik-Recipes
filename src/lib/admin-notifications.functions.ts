@@ -8,7 +8,7 @@
 //   - batch_id + audit log previo (`pending`) permite reintento idempotente.
 //   - Segmento "all" y broadcast a admins/devs bloqueados salvo modo especial.
 import { createServerFn } from "@tanstack/react-start";
-import { requireAuth } from "@/lib/auth/require-auth.server";
+import { requireAuth } from "@/lib/auth/require-auth";
 import { z } from "zod";
 import {
   TEMPLATES,
@@ -30,11 +30,12 @@ const RATE_LIMIT_HOUR_THRESHOLD = 50;
 const RATE_LIMIT_DAY_TOTAL = 10_000; // notificaciones totales / admin / dia
 const BATCH_INSERT_SIZE = 250;
 
-// Solo se permiten URLs que apunten a dominios propios.
-const NOTIF_URL_WHITELIST = new Set<string>([
-  "melik-recipes.lovable.app",
-  "melikbakery.com",
-]);
+// Solo se permiten URLs que apunten a dominios propios. APP_DOMAIN replaces
+// the old Lovable-hosted domain — set it to wherever this app is deployed.
+// Read per-call (not at module scope) per TanStack Start's env-access rules.
+function notifUrlWhitelist(): Set<string> {
+  return new Set([process.env.APP_DOMAIN, "melikbakery.com"].filter((d): d is string => !!d));
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -91,7 +92,7 @@ function assertUrlsWhitelisted(text: string, label: string): void {
   let m: RegExpExecArray | null;
   while ((m = urlRe.exec(text)) !== null) {
     const host = m[1]!.split("/")[0]!.toLowerCase().replace(/^www\./, "");
-    if (!NOTIF_URL_WHITELIST.has(host)) {
+    if (!notifUrlWhitelist().has(host)) {
       throw new Error(
         `APP-VAL-003: ${label} contiene un enlace a un dominio no permitido (${host}).`,
       );

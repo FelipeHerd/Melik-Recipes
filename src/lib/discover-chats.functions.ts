@@ -1,7 +1,7 @@
 // Discover chats: cloud-persisted conversations with Chef AI (Vision).
 // Images stored under the local `chat-images` bucket; DB keeps only the path.
 import { createServerFn } from "@tanstack/react-start";
-import { requireAuth } from "@/lib/auth/require-auth.server";
+import { requireAuth } from "@/lib/auth/require-auth";
 import { z } from "zod";
 
 const CHAT_IMAGE_BUCKET = "chat-images";

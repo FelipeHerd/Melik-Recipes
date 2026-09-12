@@ -2,7 +2,7 @@
 // Users upsert their own heartbeat row. Admins query the live count via an
 // admin-gated server function.
 import { createServerFn } from "@tanstack/react-start";
-import { requireAuth } from "@/lib/auth/require-auth.server";
+import { requireAuth } from "@/lib/auth/require-auth";
 
 export const heartbeatPresence = createServerFn({ method: "POST" })
   .middleware([requireAuth])

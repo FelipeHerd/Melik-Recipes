@@ -3,6 +3,11 @@ import "./lib/error-capture";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 
+// Started once per server process (guarded in scheduler.server.ts against
+// HMR re-evaluation). Replaces Supabase's pg_cron.
+import { startScheduler } from "./lib/cron/scheduler.server";
+startScheduler();
+
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
 };

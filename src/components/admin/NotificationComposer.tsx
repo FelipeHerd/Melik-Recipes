@@ -453,7 +453,7 @@ export function NotificationComposer() {
                   value={customMessage}
                   onChange={(e) => setCustomMessage(e.target.value.slice(0, 500))}
                   rows={5}
-                  placeholder="Puedes usar {nombre}. Enlaces solo a melik-recipes.lovable.app o melikbakery.com."
+                  placeholder="Puedes usar {nombre}. Enlaces solo al dominio de la app o melikbakery.com."
                   className="mt-2 w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-primary focus:outline-none"
                 />
               </div>

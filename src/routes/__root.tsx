@@ -16,7 +16,7 @@ import { PageFallback } from "@/components/PageFallback";
 import { ModalFallback } from "@/components/ModalFallback";
 
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
+import { reportClientError } from "../lib/error-reporting";
 import { RecipesProvider } from "@/lib/recipes-context";
 import { UserMenu, SidebarUsername } from "@/components/UserMenu";
 import { GuestMigrationModal } from "@/components/GuestMigrationModal";
@@ -52,7 +52,7 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
   useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
+    reportClientError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
   return (
     <div className="flex min-h-dvh items-center justify-center bg-background px-4">

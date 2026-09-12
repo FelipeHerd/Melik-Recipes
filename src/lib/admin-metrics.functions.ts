@@ -1,7 +1,7 @@
 // Admin metrics — Tab 1 (Radar): stats, top consumers, error inbox, leads export.
 // Every function is `requireAuth` + `assertAdmin` gated.
 import { createServerFn } from "@tanstack/react-start";
-import { requireAuth } from "@/lib/auth/require-auth.server";
+import { requireAuth } from "@/lib/auth/require-auth";
 import { z } from "zod";
 
 type Role = "user" | "admin" | "dev";

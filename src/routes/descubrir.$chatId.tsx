@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Send, Sparkles, ImageIcon, BookOpen, X } from "lucide-react";
 import { showError } from "@/lib/errors/toast";
-import { reportLovableError } from "@/lib/lovable-error-reporting";
+import { reportClientError } from "@/lib/error-reporting";
 import { QueryErrorFallback } from "@/components/QueryErrorFallback";
 import ReactMarkdown from "react-markdown";
 import { ChatAttachMenu } from "@/components/ChatAttachMenu";
@@ -217,7 +217,7 @@ function DescubrirChat() {
               queryClient.invalidateQueries({ queryKey: ["discover-chat", chatId] });
             }
           })
-          .catch((err) => reportLovableError(err, { context: "generateChatTitle-cleanup" }));
+          .catch((err) => reportClientError(err, { context: "generateChatTitle-cleanup" }));
       }
 
       return assistantMessage;

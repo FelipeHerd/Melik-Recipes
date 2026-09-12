@@ -3,7 +3,7 @@ import { useState, Suspense, lazy } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Send, Sparkles, ImageIcon, BookOpen, X } from "lucide-react";
 import { showError } from "@/lib/errors/toast";
-import { reportLovableError } from "@/lib/lovable-error-reporting";
+import { reportClientError } from "@/lib/error-reporting";
 import { ChatAttachMenu } from "@/components/ChatAttachMenu";
 import { ChatRecipeAttachmentCard } from "@/components/ChatRecipeAttachmentCard";
 import type { AttachedImage } from "@/components/ChatImageAttach";
@@ -203,7 +203,7 @@ function DescubrirIndex() {
             queryClient.invalidateQueries({ queryKey: ["discover-chats"] });
           }
         })
-        .catch((err) => reportLovableError(err, { context: "generateChatTitle-cleanup" }));
+        .catch((err) => reportClientError(err, { context: "generateChatTitle-cleanup" }));
 
       return id;
     },

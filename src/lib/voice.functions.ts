@@ -3,7 +3,7 @@
 // to the browser. Voice transcripts are NOT persisted: the /chef thread
 // stays local to the session by design.
 import { createServerFn } from "@tanstack/react-start";
-import { requireAuth } from "@/lib/auth/require-auth.server";
+import { requireAuth } from "@/lib/auth/require-auth";
 import { z } from "zod";
 
 export type VoiceQuotaDTO = {

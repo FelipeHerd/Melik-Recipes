@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://melikbakery-recipes.lovable.app/sitemap.xml
+# TODO: add "Sitemap: https://<your-domain>/sitemap.xml" once the
+# self-hosted domain is decided (was previously the Lovable-hosted domain).

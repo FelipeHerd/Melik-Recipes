@@ -3,7 +3,7 @@
 // update; there's no browser DB/storage client anymore, so all three steps
 // now happen in one authenticated server function).
 import { createServerFn } from "@tanstack/react-start";
-import { requireAuth } from "@/lib/auth/require-auth.server";
+import { requireAuth } from "@/lib/auth/require-auth";
 
 const AVATAR_BUCKET = "avatars";
 const AVATAR_TTL_SECONDS = 60 * 60 * 24 * 365 * 5; // 5 years

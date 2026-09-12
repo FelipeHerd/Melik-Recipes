@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireAuth } from "@/lib/auth/require-auth.server";
+import { requireAuth } from "@/lib/auth/require-auth";
 
 export const USERNAME_REGEX = /^[a-z0-9_.]{3,20}$/;
 // No leading/trailing dot and no consecutive dots.

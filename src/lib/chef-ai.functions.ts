@@ -1,7 +1,7 @@
 // Chef AI server functions — Vision-enabled chat via OpenAI.
 // Used by both /chef (FAB, ephemeral image) and /descubrir (persisted chat).
 import { createServerFn } from "@tanstack/react-start";
-import { requireAuth } from "@/lib/auth/require-auth.server";
+import { requireAuth } from "@/lib/auth/require-auth";
 import { z } from "zod";
 
 const messageBlockSchema = z.union([

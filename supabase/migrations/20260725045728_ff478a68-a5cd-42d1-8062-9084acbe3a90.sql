@@ -1,1 +1,0 @@
-ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS billing_cycle text CHECK (billing_cycle IN ('monthly','yearly'));

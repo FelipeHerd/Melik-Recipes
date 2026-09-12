@@ -4,7 +4,7 @@
 // current user are scoped by an explicit `user_id` filter on every query,
 // replacing what Supabase RLS used to enforce implicitly.
 import { createServerFn } from "@tanstack/react-start";
-import { requireAuth } from "@/lib/auth/require-auth.server";
+import { requireAuth } from "@/lib/auth/require-auth";
 import { z } from "zod";
 
 type Role = "user" | "admin" | "dev";

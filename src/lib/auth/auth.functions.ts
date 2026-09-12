@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireAuth } from "@/lib/auth/require-auth.server";
+import { requireAuth } from "@/lib/auth/require-auth";
 import { USERNAME_DOT_FORBIDDEN, USERNAME_REGEX } from "@/lib/username.functions";
 
 // Session payload returned to the client on login/signup/resetPassword —

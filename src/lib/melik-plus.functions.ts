@@ -5,7 +5,7 @@
 // keep server-only code out of the client bundle.
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireAuth } from "@/lib/auth/require-auth.server";
+import { requireAuth } from "@/lib/auth/require-auth";
 
 export type PaymentProvider = "stripe" | "mercadopago" | "mock";
 

@@ -3,7 +3,7 @@
 // current user's library.
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireAuth } from "@/lib/auth/require-auth.server";
+import { requireAuth } from "@/lib/auth/require-auth";
 import {
   parseIngredients,
   parseSteps,
