@@ -5,7 +5,9 @@ import { toast } from "sonner";
 import { showError } from "@/lib/errors/toast";
 import { useModalA11y } from "@/hooks/use-modal-a11y";
 import { generateShareToken } from "@/lib/share.functions";
-import melikLogo from "@/assets/melik-logo.png.asset.json";
+// Served straight from public/ (see CLAUDE.md) — the Lovable-hosted asset
+// manifest this used to import from is gone along with Lovable's CDN.
+const melikLogo = { url: "/melik-logo.png" };
 
 export function ShareRecipeModal({
   recipeId,

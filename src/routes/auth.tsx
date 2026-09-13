@@ -6,7 +6,9 @@ import { login } from "@/lib/auth/auth.functions";
 import { setSession } from "@/lib/auth/session-store";
 import { AuthField, authInputClass } from "@/components/AuthField";
 import { AuthPageSkeleton, AuthSkeleton } from "@/components/AuthSkeleton";
-import melikLogo from "@/assets/melik-logo.png.asset.json";
+// Served straight from public/ (see CLAUDE.md) — the Lovable-hosted asset
+// manifest this used to import from is gone along with Lovable's CDN.
+const melikLogo = { url: "/melik-logo.png" };
 
 // Only allow relative in-app paths as redirect target to prevent open-redirect abuse.
 function safeRedirect(v: unknown): string {

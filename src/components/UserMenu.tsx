@@ -3,7 +3,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Crown, LogIn, LogOut, User as UserIcon } from "lucide-react";
 import { clearSession, useSessionUser } from "@/lib/auth/session-store";
 import { getProfile } from "@/lib/recipes.functions";
-import melikBakeryLogo from "@/assets/melik-bakery-logo.png.asset.json";
+// Served straight from public/ (see CLAUDE.md) — the Lovable-hosted asset
+// manifest this used to import from is gone along with Lovable's CDN.
+const melikBakeryLogo = { url: "/melik-bakery-logo.png" };
 import {
   DropdownMenu,
   DropdownMenuContent,

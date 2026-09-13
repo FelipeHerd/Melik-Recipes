@@ -32,8 +32,10 @@ const DiscoverSidebarSection = lazy(() =>
     default: m.DiscoverSidebarSection,
   })),
 );
-import melikLogo from "@/assets/melik-logo.png.asset.json";
-import melikBakeryLogo from "@/assets/melik-bakery-logo.png.asset.json";
+// Served straight from public/ (see CLAUDE.md) — the Lovable-hosted asset
+// manifests these used to import from are gone along with Lovable's CDN.
+const melikLogo = { url: "/melik-logo.png" };
+const melikBakeryLogo = { url: "/melik-bakery-logo.png" };
 
 function NotFoundComponent() {
   return (
