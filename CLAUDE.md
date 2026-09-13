@@ -5,6 +5,35 @@ on Docker. Formerly built on Lovable with a Supabase backend — both are gone.
 Postgres via Kysely, a custom JWT auth stack, local-disk file storage with
 HMAC-signed URLs, and OpenAI for the Chef AI assistant.
 
+## Current status (as of 2026-09-13)
+
+The Lovable/Supabase → self-hosted migration is **done and committed**, on
+the local `juande` branch — 9 commits, one per phase, plus a follow-up logo
+fix. **None of this is pushed to `origin/juande` yet** (local is 8 commits
+ahead, 0 behind); push when ready.
+
+What still needs a human to finish setup (nothing code-side is blocking):
+
+- **Logo images are missing.** `public/melik-logo.png` and
+  `public/melik-bakery-logo.png` don't exist — they were Lovable-hosted
+  assets never committed to this repo (see the "Fix broken logo" commit).
+  Code already points at these paths; just drop the real PNGs in.
+- **`.env` has placeholder-empty secrets for**: `OPENAI_API_KEY`,
+  `APP_DOMAIN`, `ELEVENLABS_API_KEY`, `ELEVENLABS_AGENT_ID`. Chef AI and
+  voice won't work until these are filled in. `JWT_SECRET`,
+  `STORAGE_SIGNING_SECRET`, `CRON_SECRET`, and `DATABASE_URL` are already
+  populated with real generated values for local dev.
+- **Local dev Postgres**: a standalone container named `melik-schema-test`
+  (postgres:16-alpine, schema already applied) is what `.env`'s
+  `DATABASE_URL` points at (`localhost:55432`). It's a plain `docker run`
+  container, not part of `docker-compose.yml` — start it with
+  `docker start melik-schema-test` if it's stopped (data persists; it's
+  not ephemeral). For anything beyond quick local iteration, prefer
+  `docker compose up` instead, which is the real deployment path.
+- Nothing in the app currently has real user data — this was a pre-launch
+  migration (see "Database schema" below for why there's no data-migration
+  step).
+
 ## Architecture map
 
 - `src/routes/*` — file-based pages, plus a few public API routes under
@@ -218,3 +247,16 @@ See `.env.example` for the full list with descriptions. Summary:
   migration because the real self-hosted domain wasn't known yet — update
   them (and set `APP_DOMAIN` in `.env`, and the `Sitemap:` line in
   `public/robots.txt`) once it is.
+- **Lovable-hosted images don't survive the migration.** Lovable stored
+  uploaded images (logos, etc.) on its own R2-backed CDN and left behind a
+  `*.png.asset.json` manifest in the repo (`{url: "/__l5e/assets-v1/...",
+  r2_key, ...}`) instead of the actual binary — importing `.url` from one of
+  these compiles fine but 404s at runtime since `/__l5e/...` doesn't exist
+  off Lovable. This bit the app logo (`melik-logo.png` /
+  `melik-bakery-logo.png`) — fixed by pointing those 4 call sites at plain
+  `public/melik-logo.png` / `public/melik-bakery-logo.png` paths instead
+  (see the "Fix broken logo" commit). Confirmed via
+  `grep -rln "__l5e\|\.asset\.json" src public` that no other such manifests
+  remain, but if an image is ever missing after this point, check for this
+  pattern before assuming it's a relocation issue — the source file may
+  simply never have been committed to git.
