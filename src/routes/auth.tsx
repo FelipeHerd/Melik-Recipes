@@ -37,10 +37,10 @@ export const Route = createFileRoute("/auth")({
         property: "og:description",
         content: "Accede a tu recetario personal y sincroniza tus recetas en la nube.",
       },
-      { property: "og:url", content: "https://melik-recipes.lovable.app/auth" },
+      { property: "og:url", content: "https://recipes.melikbakery.com/auth" },
     ],
     links: [
-      { rel: "canonical", href: "https://melik-recipes.lovable.app/auth" },
+      { rel: "canonical", href: "https://recipes.melikbakery.com/auth" },
       { rel: "preload", as: "image", href: melikLogo.url },
     ],
   }),

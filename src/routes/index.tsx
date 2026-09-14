@@ -51,9 +51,9 @@ export const Route = createFileRoute("/")({
         property: "og:description",
         content: "Organiza, busca y cocina tus recetas favoritas con ayuda de un asistente IA.",
       },
-      { property: "og:url", content: "https://melik-recipes.lovable.app/" },
+      { property: "og:url", content: "https://recipes.melikbakery.com/" },
     ],
-    links: [{ rel: "canonical", href: "https://melik-recipes.lovable.app/" }],
+    links: [{ rel: "canonical", href: "https://recipes.melikbakery.com/" }],
   }),
   component: Home,
 });

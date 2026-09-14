@@ -146,11 +146,25 @@ this migration and unchanged.
   reachable Postgres with the schema applied.
 - `npm run build` — production build (`.output/server/index.mjs` is the
   Node entry).
-- `docker compose up --build` — full stack (app + postgres) using the
-  Dockerfile and `docker-compose.yml` at the repo root.
+- `docker compose up` — full stack (nginx + app + postgres) via
+  `docker-compose.yml` at the repo root. `app` pulls its image from GHCR
+  (built by CI) rather than building locally; `nginx` reverse-proxies
+  incoming HTTP traffic to it (see "Reverse proxy" below).
 - Single lockfile: `package-lock.json` (npm). `bun.lock`/`bunfig.toml` were
   removed — bun wasn't available when this was migrated; reintroduce only
   deliberately.
+
+## Reverse proxy
+
+`nginx` (`nginx/default.conf`, official `nginx:1.27-alpine` image, no custom
+Dockerfile) sits in front of `app` in `docker-compose.yml` and is the only
+service that publishes a host port (`APP_PORT`, default 3000) — `app` is
+reachable only on the internal compose network (`http://app:3000`). TLS is
+still terminated outside this stack: the private server forwards plain HTTP
+to nginx's published port, same as it used to forward directly to the app
+container. `client_max_body_size` in that config is set to cover the app's
+largest upload (10 MB avatars, see Gotchas) plus multipart overhead — bump it
+if a larger upload limit is ever introduced.
 
 ## Environment variables
 
@@ -167,7 +181,7 @@ See `.env.example` for the full list with descriptions. Summary:
 | `APP_DOMAIN` | Whitelisted link domain in admin broadcast notifications |
 | `ELEVENLABS_API_KEY` / `ELEVENLABS_AGENT_ID` | Kiko voice assistant |
 | `POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD` | docker-compose only |
-| `APP_PORT` | Host port the app container publishes (default 3000) |
+| `APP_PORT` | Host port nginx publishes for the app (default 3000) |
 
 ## Gotchas
 

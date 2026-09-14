@@ -73,9 +73,9 @@ export const Route = createFileRoute("/chef")({
         content:
           "Chatea con Kiko, un asistente IA que reconoce ingredientes y te guía paso a paso.",
       },
-      { property: "og:url", content: "https://melik-recipes.lovable.app/chef" },
+      { property: "og:url", content: "https://recipes.melikbakery.com/chef" },
     ],
-    links: [{ rel: "canonical", href: "https://melik-recipes.lovable.app/chef" }],
+    links: [{ rel: "canonical", href: "https://recipes.melikbakery.com/chef" }],
   }),
   component: ChefPage,
 });

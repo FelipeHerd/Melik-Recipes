@@ -17,10 +17,10 @@ export const Route = createFileRoute("/auth/update-password")({
         content: "Elige una nueva contraseña segura para tu cuenta de Melik Recipes.",
       },
       { property: "og:title", content: "Nueva contraseña — Melik Recipes" },
-      { property: "og:url", content: "https://melik-recipes.lovable.app/auth/update-password" },
+      { property: "og:url", content: "https://recipes.melikbakery.com/auth/update-password" },
       { name: "robots", content: "noindex" },
     ],
-    links: [{ rel: "canonical", href: "https://melik-recipes.lovable.app/auth/update-password" }],
+    links: [{ rel: "canonical", href: "https://recipes.melikbakery.com/auth/update-password" }],
   }),
   component: UpdatePasswordPage,
 });

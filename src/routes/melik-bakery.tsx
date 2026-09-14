@@ -107,9 +107,9 @@ export const Route = createFileRoute("/melik-bakery")({
           content:
             "Explora el catálogo oficial de recetas de la Melik Bakery: panadería artesanal, dulces y clásicos de la casa.",
         },
-        { property: "og:url", content: "https://melik-recipes.lovable.app/melik-bakery" },
+        { property: "og:url", content: "https://recipes.melikbakery.com/melik-bakery" },
       ],
-      links: [{ rel: "canonical", href: "https://melik-recipes.lovable.app/melik-bakery" }],
+      links: [{ rel: "canonical", href: "https://recipes.melikbakery.com/melik-bakery" }],
       scripts:
         graph.length > 0
           ? [
