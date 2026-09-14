@@ -417,7 +417,17 @@ function AppShell() {
 }
 
 function RootComponent() {
-  const { queryClient } = Route.useRouteContext();
+  // Read the queryClient straight off the router instance rather than via
+  // Route.useRouteContext() (a reactive subscription to the current route
+  // match's context). The match store can momentarily have no match for
+  // the root route during a client-side navigation, in which case that
+  // hook falls back to an empty context and `queryClient` comes back
+  // undefined for a render — QueryClientProvider then throws "No
+  // QueryClient set" for every hook under it. The client never changes
+  // after router creation, so read it from the stable router.options
+  // instead of a value that's re-derived on every route transition.
+  const router = useRouter();
+  const { queryClient } = router.options.context as { queryClient: QueryClient };
   return (
     <QueryClientProvider client={queryClient}>
       <RecipesProvider>
