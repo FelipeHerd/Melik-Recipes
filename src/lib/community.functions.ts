@@ -76,13 +76,21 @@ export const listCommunityRecipes = createServerFn({ method: "POST" })
     const rows = await q.execute();
     const hasMore = rows.length > limit;
     const trimmed = hasMore ? rows.slice(0, limit) : rows;
-    const nextCursor = hasMore ? new Date(trimmed[trimmed.length - 1].created_at).toISOString() : null;
+    const nextCursor = hasMore
+      ? new Date(trimmed[trimmed.length - 1].created_at).toISOString()
+      : null;
 
     // Batch lookup: usernames for rows without original_author.
-    const missingAuthorIds = Array.from(new Set(trimmed.filter((r) => !r.original_author).map((r) => r.user_id)));
+    const missingAuthorIds = Array.from(
+      new Set(trimmed.filter((r) => !r.original_author).map((r) => r.user_id)),
+    );
     const usernameByUserId = new Map<string, string>();
     if (missingAuthorIds.length > 0) {
-      const profiles = await db.selectFrom("profiles").select(["id", "username"]).where("id", "in", missingAuthorIds).execute();
+      const profiles = await db
+        .selectFrom("profiles")
+        .select(["id", "username"])
+        .where("id", "in", missingAuthorIds)
+        .execute();
       for (const p of profiles) {
         if (p.username) usernameByUserId.set(p.id, p.username);
       }
@@ -90,7 +98,9 @@ export const listCommunityRecipes = createServerFn({ method: "POST" })
 
     const items: CommunityRecipe[] = trimmed.map((r) => {
       const ingredients: Ingredient[] =
-        r.ingredients_json != null ? parseIngredients(r.ingredients_json) : parseIngredients(r.ingredients);
+        r.ingredients_json != null
+          ? parseIngredients(r.ingredients_json)
+          : parseIngredients(r.ingredients);
       const stepsRaw: Step[] =
         r.instructions_json != null ? parseSteps(r.instructions_json) : parseSteps(r.instructions);
       return {
@@ -153,14 +163,22 @@ export const saveCommunityRecipe = createServerFn({ method: "POST" })
 
     let originalAuthor: string | null = origin.original_author ?? null;
     if (!originalAuthor) {
-      const profile = await db.selectFrom("profiles").select(["username"]).where("id", "=", origin.user_id).executeTakeFirst();
+      const profile = await db
+        .selectFrom("profiles")
+        .select(["username"])
+        .where("id", "=", origin.user_id)
+        .executeTakeFirst();
       originalAuthor = profile?.username ?? null;
     }
 
     const ingredients =
-      origin.ingredients_json != null ? parseIngredients(origin.ingredients_json) : parseIngredients(origin.ingredients);
+      origin.ingredients_json != null
+        ? parseIngredients(origin.ingredients_json)
+        : parseIngredients(origin.ingredients);
     const stepsRaw =
-      origin.instructions_json != null ? parseSteps(origin.instructions_json) : parseSteps(origin.instructions);
+      origin.instructions_json != null
+        ? parseSteps(origin.instructions_json)
+        : parseSteps(origin.instructions);
     // Vacuna #2: strip every image path from the clone.
     const instructions = stepsRaw.map((s) => ({
       text: s.text,

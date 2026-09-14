@@ -58,7 +58,11 @@ export function toAppError(err: unknown, hint?: AppErrorCode): AppError {
   if (name === "NotAllowedError" || name === "PermissionDeniedError") {
     return new AppError(ERR.CAMERA_DENIED, { cause: err });
   }
-  if (name === "NotFoundError" || name === "OverconstrainedError" || name === "DevicesNotFoundError") {
+  if (
+    name === "NotFoundError" ||
+    name === "OverconstrainedError" ||
+    name === "DevicesNotFoundError"
+  ) {
     return new AppError(ERR.CAMERA_NOT_FOUND, { cause: err });
   }
   if (name === "QuotaExceededError" || name === "NS_ERROR_DOM_QUOTA_REACHED") {
@@ -67,13 +71,22 @@ export function toAppError(err: unknown, hint?: AppErrorCode): AppError {
 
   // 4) Pattern rules.
   const lower = raw.toLowerCase();
-  if (lower.includes("failed to fetch") || lower.includes("networkerror") || lower === "load failed") {
+  if (
+    lower.includes("failed to fetch") ||
+    lower.includes("networkerror") ||
+    lower === "load failed"
+  ) {
     return new AppError(ERR.NETWORK_OFFLINE, { cause: err });
   }
   if (lower.includes("timeout") || lower.includes("504")) {
     return new AppError(ERR.NETWORK_TIMEOUT, { cause: err });
   }
-  if (/\b5\d{2}\b/.test(lower) || lower.includes("internal server error") || lower.includes("bad gateway") || lower.includes("service unavailable")) {
+  if (
+    /\b5\d{2}\b/.test(lower) ||
+    lower.includes("internal server error") ||
+    lower.includes("bad gateway") ||
+    lower.includes("service unavailable")
+  ) {
     return new AppError(ERR.SERVER_ERROR, { cause: err });
   }
   if (

@@ -5,7 +5,6 @@ import cron from "node-cron";
 import { runMelikPlusRenew, runTrialExpiringReminder } from "@/lib/cron/jobs.server";
 
 declare global {
-  // eslint-disable-next-line no-var
   var __melikCronStarted: boolean | undefined;
 }
 

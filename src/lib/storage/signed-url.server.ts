@@ -21,13 +21,22 @@ export function signPath(bucket: string, filePath: string, ttlSeconds: number): 
   return `/api/public/files/${bucket}/${encodedPath}?exp=${exp}&sig=${sig}`;
 }
 
-export function signPaths(bucket: string, paths: string[], ttlSeconds: number): Map<string, string> {
+export function signPaths(
+  bucket: string,
+  paths: string[],
+  ttlSeconds: number,
+): Map<string, string> {
   const map = new Map<string, string>();
   for (const p of paths) map.set(p, signPath(bucket, p, ttlSeconds));
   return map;
 }
 
-export function verifySignedUrl(bucket: string, filePath: string, exp: number, sig: string): boolean {
+export function verifySignedUrl(
+  bucket: string,
+  filePath: string,
+  exp: number,
+  sig: string,
+): boolean {
   if (!Number.isFinite(exp) || exp * 1000 < Date.now()) return false;
   const expected = sign(bucket, filePath, exp);
   const a = Buffer.from(sig, "hex");

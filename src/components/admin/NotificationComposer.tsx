@@ -1,7 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { AlertTriangle, Loader2, Search, Send, ShieldCheck, Sparkles, Trash2, UserPlus, X } from "lucide-react";
+import {
+  AlertTriangle,
+  Loader2,
+  Search,
+  Send,
+  ShieldCheck,
+  Sparkles,
+  Trash2,
+  UserPlus,
+  X,
+} from "lucide-react";
 import { searchAdminUsersV2, type AdminCrmRow } from "@/lib/admin-crm.functions";
 import {
   listNotificationTemplates,
@@ -12,12 +22,7 @@ import {
 
 type TargetMode = "users" | "segment" | "uuids";
 type Segment =
-  | "all"
-  | "melik_plus_active"
-  | "free"
-  | "trial_active"
-  | "kiko_blocked"
-  | "admins_devs";
+  "all" | "melik_plus_active" | "free" | "trial_active" | "kiko_blocked" | "admins_devs";
 
 const SEGMENT_LABELS: Record<Segment, string> = {
   all: "Todos los usuarios",
@@ -176,12 +181,9 @@ export function NotificationComposer() {
       setLastResult(res);
       setPassword("");
       setConfirmText("");
-      if (res.status === "ok")
-        toast.success(`Enviadas ${res.inserted} notificaciones.`);
+      if (res.status === "ok") toast.success(`Enviadas ${res.inserted} notificaciones.`);
       else if (res.status === "partial")
-        toast.warning(
-          `Envío parcial: ${res.inserted} OK, ${res.failed.length} fallaron.`,
-        );
+        toast.warning(`Envío parcial: ${res.inserted} OK, ${res.failed.length} fallaron.`);
       else toast.error("El envío falló completamente. Revisa el detalle.");
       void queryClient.invalidateQueries({ queryKey: ["admin", "notif-history"] });
     },
@@ -197,8 +199,7 @@ export function NotificationComposer() {
       if (customMessage.trim().length < 3) return "Mensaje muy corto.";
     } else if (template) {
       for (const key of template.requiredContext) {
-        if (!ctx[key] || ctx[key]!.trim() === "")
-          return `Falta valor para {ctx.${key}}.`;
+        if (!ctx[key] || ctx[key]!.trim() === "") return `Falta valor para {ctx.${key}}.`;
       }
     }
     return null;
@@ -206,11 +207,7 @@ export function NotificationComposer() {
 
   const contentError = contentReady();
   const targetsReady =
-    mode === "users"
-      ? picked.length > 0
-      : mode === "segment"
-        ? true
-        : uuidsText.trim().length > 0;
+    mode === "users" ? picked.length > 0 : mode === "segment" ? true : uuidsText.trim().length > 0;
 
   // ---------- Preview render (client-side; server re-renders authoritatively) ----------
   const previewSample = picked[0] ?? frozen?.sample[0];
@@ -221,10 +218,8 @@ export function NotificationComposer() {
       .replace(/\{nombre\}/g, previewNombre)
       .replace(/\{ctx\.([a-z0-9_]+)\}/gi, (_f, k: string) => ctx[k] || `{ctx.${k}}`);
   }
-  const previewTitle =
-    templateId === "custom" ? customTitle : (template?.title ?? "");
-  const previewMessage =
-    templateId === "custom" ? customMessage : (template?.message ?? "");
+  const previewTitle = templateId === "custom" ? customTitle : (template?.title ?? "");
+  const previewMessage = templateId === "custom" ? customMessage : (template?.message ?? "");
 
   // Reset frozen when the user changes anything material.
   const resetFrozenRef = useRef<() => void>(() => setFrozen(null));
@@ -277,9 +272,7 @@ export function NotificationComposer() {
                 />
               </label>
 
-              {search.isFetching && (
-                <p className="text-xs text-zinc-500">Buscando…</p>
-              )}
+              {search.isFetching && <p className="text-xs text-zinc-500">Buscando…</p>}
               {search.data && search.data.length > 0 && (
                 <ul className="max-h-56 divide-y divide-zinc-800 overflow-auto rounded-xl border border-zinc-800 bg-zinc-900">
                   {search.data.map((u) => {
@@ -295,7 +288,11 @@ export function NotificationComposer() {
                         >
                           <span className="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-full bg-zinc-800 text-xs">
                             {u.avatarUrl ? (
-                              <img src={u.avatarUrl} alt="" className="h-full w-full object-cover" />
+                              <img
+                                src={u.avatarUrl}
+                                alt=""
+                                className="h-full w-full object-cover"
+                              />
                             ) : (
                               (u.firstName?.[0] ?? u.username?.[0] ?? "?").toUpperCase()
                             )}
@@ -326,9 +323,7 @@ export function NotificationComposer() {
                       {p.firstName ?? p.username ?? p.id.slice(0, 8)}
                       <button
                         type="button"
-                        onClick={() =>
-                          setPicked((prev) => prev.filter((x) => x.id !== p.id))
-                        }
+                        onClick={() => setPicked((prev) => prev.filter((x) => x.id !== p.id))}
                         className="text-zinc-500 hover:text-zinc-100"
                       >
                         <X className="h-3 w-3" />
@@ -364,8 +359,8 @@ export function NotificationComposer() {
                 </button>
               ))}
               <p className="col-span-full mt-1 text-xs text-zinc-500">
-                Los segmentos "Todos" y "Admins y devs" requieren rol admin. Los
-                admins/devs se excluyen automáticamente de los demás.
+                Los segmentos "Todos" y "Admins y devs" requieren rol admin. Los admins/devs se
+                excluyen automáticamente de los demás.
               </p>
             </div>
           )}
@@ -393,9 +388,7 @@ export function NotificationComposer() {
             <h2 className="text-sm font-semibold text-zinc-100">Contenido</h2>
           </div>
 
-          <label className="block text-xs uppercase tracking-widest text-zinc-500">
-            Plantilla
-          </label>
+          <label className="block text-xs uppercase tracking-widest text-zinc-500">Plantilla</label>
           <select
             value={templateId}
             onChange={(e) => setTemplateId(e.target.value)}
@@ -487,9 +480,7 @@ export function NotificationComposer() {
             )
           )}
 
-          {contentError && (
-            <p className="mt-3 text-xs text-amber-400">{contentError}</p>
-          )}
+          {contentError && <p className="mt-3 text-xs text-amber-400">{contentError}</p>}
         </section>
       </div>
 
@@ -502,14 +493,10 @@ export function NotificationComposer() {
           </p>
           <div className="rounded-2xl border border-border/60 bg-card/40 p-4">
             <p className="font-medium text-foreground">
-              {renderPreview(previewTitle) || (
-                <span className="text-zinc-500">Sin título</span>
-              )}
+              {renderPreview(previewTitle) || <span className="text-zinc-500">Sin título</span>}
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
-              {renderPreview(previewMessage) || (
-                <span className="text-zinc-500">Sin mensaje</span>
-              )}
+              {renderPreview(previewMessage) || <span className="text-zinc-500">Sin mensaje</span>}
             </p>
           </div>
         </section>
@@ -550,8 +537,7 @@ export function NotificationComposer() {
                 )}
                 {frozen.invalid.length > 0 && (
                   <p className="text-xs text-amber-400">
-                    Se descartaron {frozen.invalid.length} entradas (inválidas o
-                    admins/devs).
+                    Se descartaron {frozen.invalid.length} entradas (inválidas o admins/devs).
                   </p>
                 )}
                 {frozen.sample.length > 0 && (
@@ -585,8 +571,8 @@ export function NotificationComposer() {
                     <p className="font-medium">Envío masivo</p>
                   </div>
                   <p>
-                    Escribe <code className="text-amber-200">ENVIAR {frozen.count}</code>{" "}
-                    para desbloquear el botón.
+                    Escribe <code className="text-amber-200">ENVIAR {frozen.count}</code> para
+                    desbloquear el botón.
                   </p>
                   <input
                     value={confirmText}

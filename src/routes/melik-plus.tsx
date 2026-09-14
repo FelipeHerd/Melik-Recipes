@@ -20,14 +20,8 @@ import {
 } from "lucide-react";
 import { useProfile } from "@/lib/use-profile";
 import { showError } from "@/lib/errors/toast";
-import {
-  cancelMockSubscription,
-  getMyBakeryEntitlements,
-} from "@/lib/melik-plus.functions";
-import {
-  MelikPlusCheckoutModal,
-  type Billing,
-} from "@/components/MelikPlusCheckoutModal";
+import { cancelMockSubscription, getMyBakeryEntitlements } from "@/lib/melik-plus.functions";
+import { MelikPlusCheckoutModal, type Billing } from "@/components/MelikPlusCheckoutModal";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -56,7 +50,6 @@ export const Route = createFileRoute("/melik-plus")({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-
     ],
   }),
   component: MelikPlusPage,
@@ -96,10 +89,7 @@ function MelikPlusPage() {
   const [busy, setBusy] = useState(false);
 
   const status = (profile?.subscription_status ?? "inactive") as
-    | "active"
-    | "canceled"
-    | "inactive"
-    | "past_due";
+    "active" | "canceled" | "inactive" | "past_due";
   const premiumUntil = profile?.premium_until ?? null;
   const untilFuture = isFuture(premiumUntil);
   const isActive = status === "active" && (premiumUntil === null || untilFuture);
@@ -166,7 +156,6 @@ function MelikPlusPage() {
 
         <Hero />
 
-
         <div className="mt-10 flex justify-center">
           <BillingToggle billing={billing} onChange={setBilling} />
         </div>
@@ -190,7 +179,6 @@ function MelikPlusPage() {
             Cancela cuando quieras
           </span>
         </div>
-
       </div>
 
       <MelikPlusCheckoutModal
@@ -240,7 +228,8 @@ function Hero() {
         Desbloquea el Chef que llevas dentro
       </h1>
       <p className="mx-auto mt-4 max-w-xl text-balance text-sm text-muted-foreground sm:text-base">
-        Lleva tu cocina al siguiente nivel con Kiko sin límites, acceso a las Recetas Oficiales de Melik Bakery y funciones exclusivas para tener control total.&nbsp;
+        Lleva tu cocina al siguiente nivel con Kiko sin límites, acceso a las Recetas Oficiales de
+        Melik Bakery y funciones exclusivas para tener control total.&nbsp;
       </p>
     </header>
   );
@@ -424,8 +413,8 @@ function BakeryUnlockCallout() {
             5% en todas tus compras
           </h3>
           <p className="mt-2 text-sm text-muted-foreground">
-            Aplicado automáticamente en cada pedido a través de la web de Melik
-            Bakery mientras tu suscripción esté activa.
+            Aplicado automáticamente en cada pedido a través de la web de Melik Bakery mientras tu
+            suscripción esté activa.
           </p>
         </div>
 
@@ -441,9 +430,8 @@ function BakeryUnlockCallout() {
             Cada 6 meses, una receta es TUYA
           </h3>
           <p className="mt-2 text-sm text-muted-foreground">
-            En los meses <strong>1, 7, …</strong> ganas un desbloqueo
-            permanente. No pagas por receta: cada mes de suscripción suma al
-            contador (no tiene que ser continuo).
+            En los meses <strong>1, 7, …</strong> ganas un desbloqueo permanente. No pagas por
+            receta: cada mes de suscripción suma al contador (no tiene que ser continuo).
           </p>
         </div>
       </div>
@@ -547,8 +535,7 @@ function BakeryUnlockCallout() {
                   const reached = paidMonthsTotal >= m.absoluteMonth;
                   const claimed = unlocksClaimed > m.unlockIndex;
                   const isClaimed = reached && claimed;
-                  const shouldAnimate =
-                    !prefersReducedMotion && justClaimedIndex === m.unlockIndex;
+                  const shouldAnimate = !prefersReducedMotion && justClaimedIndex === m.unlockIndex;
                   return (
                     <span
                       key={m.unlockIndex}
@@ -576,8 +563,6 @@ function BakeryUnlockCallout() {
     </section>
   );
 }
-
-
 
 function BillingToggle({
   billing,
@@ -650,7 +635,6 @@ function FreePlanCard({ isPremium }: { isPremium: boolean }) {
         <FeatureCheck>Tu recetario personal ilimitado</FeatureCheck>
         <FeatureCross>Sin desbloqueos de Melik Bakery</FeatureCross>
         <FeatureCross>Sin privatizar tus recetas</FeatureCross>
-
       </ul>
 
       <div className="mt-auto pt-6">
@@ -683,15 +667,14 @@ function PlusPlanCard({
   const ctaLabel = isPremium
     ? "Ya eres Melik+"
     : !isAuthenticated
-    ? "Comenzar ahora"
-    : "Comenzar ahora";
+      ? "Comenzar ahora"
+      : "Comenzar ahora";
 
   return (
     <article
       className="relative flex flex-col rounded-3xl border-2 border-[color:var(--ochre)] bg-card/60 p-6 sm:p-7"
       style={{
-        boxShadow:
-          "0 20px 50px -20px color-mix(in oklab, var(--ochre) 45%, transparent)",
+        boxShadow: "0 20px 50px -20px color-mix(in oklab, var(--ochre) 45%, transparent)",
       }}
     >
       <span className="absolute -top-3 left-6 inline-flex items-center gap-1 rounded-full bg-[color:var(--ochre)] px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-background">
@@ -706,15 +689,11 @@ function PlusPlanCard({
       </header>
 
       <div className="mt-5 flex items-baseline gap-1.5">
-        <span className="font-display text-4xl font-semibold">
-          ${cop.format(price.amount)}
-        </span>
+        <span className="font-display text-4xl font-semibold">${cop.format(price.amount)}</span>
         <span className="text-sm text-muted-foreground">COP / {price.period}</span>
       </div>
       {price.sub && (
-        <p className="mt-1 text-xs font-medium text-[color:var(--ochre)]">
-          {price.sub}
-        </p>
+        <p className="mt-1 text-xs font-medium text-[color:var(--ochre)]">{price.sub}</p>
       )}
 
       <p className="mt-6 text-xs font-medium text-muted-foreground">

@@ -15,7 +15,9 @@ export function TopKikoUsersTable({ rows }: { rows: AdminStatsV2["topKikoUsers"]
       </div>
       <ul className="mt-5 divide-y divide-zinc-800">
         {!rows?.length && (
-          <li className="py-6 text-center text-sm text-zinc-500">Sin peticiones registradas todavía.</li>
+          <li className="py-6 text-center text-sm text-zinc-500">
+            Sin peticiones registradas todavía.
+          </li>
         )}
         {rows?.map((r, i) => (
           <li key={r.userId} className="flex items-center gap-3 py-3">
@@ -28,12 +30,8 @@ export function TopKikoUsersTable({ rows }: { rows: AdminStatsV2["topKikoUsers"]
               )}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm text-zinc-200">
-                @{r.username ?? "sin_username"}
-              </p>
-              {r.firstName && (
-                <p className="truncate text-xs text-zinc-500">{r.firstName}</p>
-              )}
+              <p className="truncate text-sm text-zinc-200">@{r.username ?? "sin_username"}</p>
+              {r.firstName && <p className="truncate text-xs text-zinc-500">{r.firstName}</p>}
             </div>
             <span className="rounded-full bg-zinc-800 px-2.5 py-1 text-xs font-medium tabular-nums text-zinc-200">
               {r.requestCount}

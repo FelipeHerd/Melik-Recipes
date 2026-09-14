@@ -29,7 +29,13 @@ export function UserAvatarBubble() {
   if (profile?.avatar_url) {
     return (
       <span className={base}>
-        <img src={profile.avatar_url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+        <img
+          src={profile.avatar_url}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          className="h-full w-full object-cover"
+        />
       </span>
     );
   }

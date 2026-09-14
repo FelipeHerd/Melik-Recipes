@@ -12,7 +12,9 @@ import { getMyUnreadNotificationsCount } from "@/lib/admin.functions";
 function useUnreadNotifications(): { count: number; enabled: boolean } {
   const { userId } = useSessionUser();
 
-  const fetchCount = useServerFn(getMyUnreadNotificationsCount as unknown as typeof getMyUnreadNotificationsCount);
+  const fetchCount = useServerFn(
+    getMyUnreadNotificationsCount as unknown as typeof getMyUnreadNotificationsCount,
+  );
   const { data } = useQuery({
     queryKey: ["notifications", "unreadCount", userId],
     queryFn: () => fetchCount() as unknown as Promise<{ count: number }>,

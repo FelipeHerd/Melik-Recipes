@@ -47,17 +47,15 @@ export function RecipePaywallOverlay({
         <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-primary/15 text-primary">
           <Crown className="h-7 w-7" />
         </div>
-        <h3 className="mt-4 font-display text-xl font-semibold">
-          Receta exclusiva Melik+
-        </h3>
+        <h3 className="mt-4 font-display text-xl font-semibold">Receta exclusiva Melik+</h3>
 
         {canClaim ? (
           <>
             <p className="mt-2 text-sm text-muted-foreground">
               Tienes <strong className="text-foreground">{unlocksAvailable}</strong>{" "}
-              {unlocksAvailable === 1 ? "desbloqueo disponible" : "desbloqueos disponibles"}.
-              Al canjear, {recipeTitle ? <>«{recipeTitle}»</> : "esta receta"} queda
-              en tu recetario para siempre — incluso si cancelas Melik+.
+              {unlocksAvailable === 1 ? "desbloqueo disponible" : "desbloqueos disponibles"}. Al
+              canjear, {recipeTitle ? <>«{recipeTitle}»</> : "esta receta"} queda en tu recetario
+              para siempre — incluso si cancelas Melik+.
             </p>
             <button
               type="button"
@@ -76,16 +74,19 @@ export function RecipePaywallOverlay({
         ) : isPremium ? (
           <>
             <p className="mt-2 text-sm text-muted-foreground">
-              Ya eres Melik+. Ganas un desbloqueo permanente cada 6 meses
-              acumulados. {paidMonthsTotal > 0 && (
-                <>Llevas <strong className="text-foreground">{paidMonthsTotal}</strong>{" "}
-                {paidMonthsTotal === 1 ? "mes" : "meses"}. </>
+              Ya eres Melik+. Ganas un desbloqueo permanente cada 6 meses acumulados.{" "}
+              {paidMonthsTotal > 0 && (
+                <>
+                  Llevas <strong className="text-foreground">{paidMonthsTotal}</strong>{" "}
+                  {paidMonthsTotal === 1 ? "mes" : "meses"}.{" "}
+                </>
               )}
               Faltan{" "}
               <strong className="text-foreground">
                 {Math.max(nextUnlockAtMonth - paidMonthsTotal, 0)}
               </strong>{" "}
-              {Math.max(nextUnlockAtMonth - paidMonthsTotal, 0) === 1 ? "mes" : "meses"} para el próximo.
+              {Math.max(nextUnlockAtMonth - paidMonthsTotal, 0) === 1 ? "mes" : "meses"} para el
+              próximo.
             </p>
             <button
               type="button"
@@ -98,9 +99,8 @@ export function RecipePaywallOverlay({
         ) : (
           <>
             <p className="mt-2 text-sm text-muted-foreground">
-              {recipeTitle ? <>«{recipeTitle}» está</> : "Esta receta está"}{" "}
-              reservada para miembros Melik+. Cada 6 meses acumulados de
-              suscripción, ganas una receta oficial permanente.
+              {recipeTitle ? <>«{recipeTitle}» está</> : "Esta receta está"} reservada para miembros
+              Melik+. Cada 6 meses acumulados de suscripción, ganas una receta oficial permanente.
             </p>
             <button
               type="button"

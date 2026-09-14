@@ -17,7 +17,6 @@ pg.types.setTypeParser(1082, (value: string) => value);
 // every DB access now happens server-side, and authorization is enforced by
 // src/lib/auth/authorize.server.ts rather than by which client you picked.
 declare global {
-  // eslint-disable-next-line no-var
   var __melikDb: Kysely<Database> | undefined;
 }
 

@@ -1,9 +1,5 @@
-import {
-  createFileRoute,
-  Outlet,
-  useNavigate,
-  useRouter,
-} from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate, useRouter } from "@tanstack/react-router";
+import type { QueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AdminSidebar } from "@/components/AdminSidebar";
@@ -22,7 +18,7 @@ export const Route = createFileRoute("/admin")({
     ],
   }),
   beforeLoad: async ({ context }) => {
-    await assertAdminOrRedirect((context as { queryClient?: any })?.queryClient);
+    await assertAdminOrRedirect((context as { queryClient?: QueryClient })?.queryClient);
   },
   pendingComponent: () => <AdminAccessVeil visible />,
   component: AdminLayout,

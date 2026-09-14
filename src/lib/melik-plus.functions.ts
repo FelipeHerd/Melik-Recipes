@@ -50,12 +50,14 @@ const paymentSchema = z.object({
   billing: z.enum(["monthly", "yearly"]),
   provider: z.enum(["stripe", "mercadopago", "mock"]).optional().default("mock"),
   outcome: z.enum(["success", "error", "connection_error", "card_declined"]).optional(),
-  cardDetails: z.object({
-    name: z.string().optional(),
-    number: z.string().optional(),
-    expiry: z.string().optional(),
-    cvc: z.string().optional(),
-  }).optional(),
+  cardDetails: z
+    .object({
+      name: z.string().optional(),
+      number: z.string().optional(),
+      expiry: z.string().optional(),
+      cvc: z.string().optional(),
+    })
+    .optional(),
 });
 
 export const simulateMelikPlusPayment = createServerFn({ method: "POST" })
@@ -78,8 +80,8 @@ export const simulateMelikPlusPayment = createServerFn({ method: "POST" })
         selectedProvider === "stripe"
           ? "Stripe"
           : selectedProvider === "mercadopago"
-          ? "MercadoPago"
-          : "Pasarela de Pagos";
+            ? "MercadoPago"
+            : "Pasarela de Pagos";
 
       return {
         success: false,
@@ -98,7 +100,8 @@ export const simulateMelikPlusPayment = createServerFn({ method: "POST" })
         provider: selectedProvider,
         error: {
           code: "CARD_DECLINED",
-          message: "Tu tarjeta fue rechazada por el banco emisor. Por favor intenta con otro método de pago.",
+          message:
+            "Tu tarjeta fue rechazada por el banco emisor. Por favor intenta con otro método de pago.",
           provider: selectedProvider,
         },
       };
@@ -209,14 +212,10 @@ const USER_CYCLE_MONTHS = 12;
 
 export function computeUnlockStats(paidMonthsTotal: number) {
   const earned =
-    paidMonthsTotal >= 1
-      ? Math.floor((paidMonthsTotal - 1) / UNLOCK_CADENCE_MONTHS) + 1
-      : 0;
-  const nextUnlockAtMonth =
-    paidMonthsTotal < 1 ? 1 : earned * UNLOCK_CADENCE_MONTHS + 1;
+    paidMonthsTotal >= 1 ? Math.floor((paidMonthsTotal - 1) / UNLOCK_CADENCE_MONTHS) + 1 : 0;
+  const nextUnlockAtMonth = paidMonthsTotal < 1 ? 1 : earned * UNLOCK_CADENCE_MONTHS + 1;
   const monthsToNextUnlock = Math.max(nextUnlockAtMonth - paidMonthsTotal, 0);
-  const cycleMonth =
-    paidMonthsTotal < 1 ? 0 : ((paidMonthsTotal - 1) % USER_CYCLE_MONTHS) + 1;
+  const cycleMonth = paidMonthsTotal < 1 ? 0 : ((paidMonthsTotal - 1) % USER_CYCLE_MONTHS) + 1;
   return { earned, nextUnlockAtMonth, monthsToNextUnlock, cycleMonth };
 }
 
@@ -240,13 +239,22 @@ export const getMyBakeryEntitlements = createServerFn({ method: "GET" })
     const { db } = await import("@/lib/db.server");
 
     const [profile, unlocks] = await Promise.all([
-      db.selectFrom("profiles").select(["paid_months_total"]).where("id", "=", context.userId).executeTakeFirst(),
-      db.selectFrom("bakery_unlocks").select(["recipe_id"]).where("user_id", "=", context.userId).execute(),
+      db
+        .selectFrom("profiles")
+        .select(["paid_months_total"])
+        .where("id", "=", context.userId)
+        .executeTakeFirst(),
+      db
+        .selectFrom("bakery_unlocks")
+        .select(["recipe_id"])
+        .where("user_id", "=", context.userId)
+        .execute(),
     ]);
 
     const paidMonthsTotal = profile?.paid_months_total ?? 0;
     const unlocksClaimed = unlocks.length;
-    const { earned, nextUnlockAtMonth, monthsToNextUnlock, cycleMonth } = computeUnlockStats(paidMonthsTotal);
+    const { earned, nextUnlockAtMonth, monthsToNextUnlock, cycleMonth } =
+      computeUnlockStats(paidMonthsTotal);
     const unlocksAvailable = Math.max(earned - unlocksClaimed, 0);
 
     return {
@@ -263,7 +271,9 @@ export const getMyBakeryEntitlements = createServerFn({ method: "GET" })
 
 export const claimBakeryUnlock = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((input: { recipeId: string }) => z.object({ recipeId: z.string().uuid() }).parse(input))
+  .inputValidator((input: { recipeId: string }) =>
+    z.object({ recipeId: z.string().uuid() }).parse(input),
+  )
   .handler(async ({ data, context }) => {
     const { db } = await import("@/lib/db.server");
     const { sql } = await import("kysely");
@@ -296,7 +306,11 @@ export const claimBakeryUnlock = createServerFn({ method: "POST" })
 
     // 3) Calcular disponibles.
     const [profile, claimedRow] = await Promise.all([
-      db.selectFrom("profiles").select(["paid_months_total"]).where("id", "=", context.userId).executeTakeFirst(),
+      db
+        .selectFrom("profiles")
+        .select(["paid_months_total"])
+        .where("id", "=", context.userId)
+        .executeTakeFirst(),
       db
         .selectFrom("bakery_unlocks")
         .select(sql<number>`count(*)`.as("count"))
@@ -314,7 +328,10 @@ export const claimBakeryUnlock = createServerFn({ method: "POST" })
 
     // 4) Insertar (idempotente vía PK).
     try {
-      await db.insertInto("bakery_unlocks").values({ user_id: context.userId, recipe_id: data.recipeId }).execute();
+      await db
+        .insertInto("bakery_unlocks")
+        .values({ user_id: context.userId, recipe_id: data.recipeId })
+        .execute();
     } catch (err) {
       throw new Error("APP-SYS-001: " + (err instanceof Error ? err.message : String(err)));
     }

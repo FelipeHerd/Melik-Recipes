@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { useInfiniteQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { showError } from "@/lib/errors/toast";
@@ -13,7 +21,12 @@ import {
   type RecipesPage,
 } from "@/lib/recipes.functions";
 import { parseIngredients, parseSteps, type Ingredient, type Step } from "@/lib/recipe-format";
-import { prependInfiniteItem, removeInfiniteItem, replaceInfiniteItem, snapshotInfinite } from "@/lib/optimistic-infinite";
+import {
+  prependInfiniteItem,
+  removeInfiniteItem,
+  replaceInfiniteItem,
+  snapshotInfinite,
+} from "@/lib/optimistic-infinite";
 
 export type { Ingredient, Step } from "@/lib/recipe-format";
 
@@ -37,7 +50,15 @@ export type Recipe = {
 
 export type NewRecipe = Omit<
   Recipe,
-  "id" | "createdAt" | "emoji" | "imageUrl" | "imagePath" | "isBakerMode" | "isDraft" | "isPublic" | "originalAuthor"
+  | "id"
+  | "createdAt"
+  | "emoji"
+  | "imageUrl"
+  | "imagePath"
+  | "isBakerMode"
+  | "isDraft"
+  | "isPublic"
+  | "originalAuthor"
 > & {
   emoji?: string;
   isBakerMode?: boolean;
@@ -237,7 +258,10 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
             data: {
               title: rest.title,
               ingredients: rest.ingredients,
-              instructions: rest.instructions.map((s) => ({ text: s.text, imagePath: s.imagePath ?? null })),
+              instructions: rest.instructions.map((s) => ({
+                text: s.text,
+                imagePath: s.imagePath ?? null,
+              })),
               category: rest.category,
               timeMinutes: rest.timeMinutes,
               emoji,
@@ -324,7 +348,8 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
     const withUploads = await Promise.all(
       recipesToMigrate.map(async (r) => {
         const url = r.imageUrl;
-        let imagePath: string | null = r.imagePath ?? (url && !url.startsWith("data:") ? url : null);
+        let imagePath: string | null =
+          r.imagePath ?? (url && !url.startsWith("data:") ? url : null);
 
         if (url && url.startsWith("data:")) {
           try {
@@ -343,7 +368,10 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
         return {
           title: r.title,
           ingredients: r.ingredients,
-          instructions: r.instructions.map((s) => ({ text: s.text, imagePath: s.imagePath ?? null })),
+          instructions: r.instructions.map((s) => ({
+            text: s.text,
+            imagePath: s.imagePath ?? null,
+          })),
           category: r.category,
           timeMinutes: r.timeMinutes,
           emoji: r.emoji,
@@ -391,7 +419,11 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
           []
         ).find((x) => x.id === id);
         const finalCover =
-          imagePath !== undefined ? imagePath : rest.imagePath !== undefined ? rest.imagePath : existing?.imagePath ?? null;
+          imagePath !== undefined
+            ? imagePath
+            : rest.imagePath !== undefined
+              ? rest.imagePath
+              : (existing?.imagePath ?? null);
 
         // Pilar 1 + Vacuna 2: optimistic replace sobre InfiniteData.
         await queryClient.cancelQueries({ queryKey: key });
@@ -418,7 +450,10 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
               id,
               title: rest.title,
               ingredients: rest.ingredients,
-              instructions: rest.instructions.map((s) => ({ text: s.text, imagePath: s.imagePath ?? null })),
+              instructions: rest.instructions.map((s) => ({
+                text: s.text,
+                imagePath: s.imagePath ?? null,
+              })),
               category: rest.category,
               timeMinutes: rest.timeMinutes,
               emoji,
@@ -492,6 +527,7 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- context hook colocated with its provider
 export function useRecipes() {
   const ctx = useContext(RecipesContext);
   if (!ctx) throw new Error("useRecipes must be used within RecipesProvider");

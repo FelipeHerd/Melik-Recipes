@@ -30,6 +30,4 @@ const routeOptions = {
   },
 };
 
-export const Route = createFileRoute("/api/public/hooks/melik-plus-renew")(
-  routeOptions as never,
-);
+export const Route = createFileRoute("/api/public/hooks/melik-plus-renew")(routeOptions as never);

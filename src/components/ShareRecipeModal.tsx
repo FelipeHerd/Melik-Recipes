@@ -98,7 +98,10 @@ export function ShareRecipeModal({
           <p className="text-xs font-medium uppercase tracking-wider text-[color:var(--ochre)]">
             Compartir receta
           </p>
-          <h2 id="share-recipe-title" className="mt-1 font-display text-2xl font-semibold leading-tight">
+          <h2
+            id="share-recipe-title"
+            className="mt-1 font-display text-2xl font-semibold leading-tight"
+          >
             {recipeTitle}
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -120,11 +123,7 @@ export function ShareRecipeModal({
                   className="pointer-events-none absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center bg-[color:var(--ochre)] shadow-md"
                   style={{ borderRadius: "22%" }}
                 >
-                  <img
-                    src={melikLogo.url}
-                    alt=""
-                    className="h-[85%] w-[85%] object-contain"
-                  />
+                  <img src={melikLogo.url} alt="" className="h-[85%] w-[85%] object-contain" />
                 </div>
               </div>
             </div>
@@ -146,7 +145,11 @@ export function ShareRecipeModal({
                   aria-label="Copiar enlace"
                   className="inline-flex h-11 w-11 flex-none items-center justify-center rounded-xl border border-border bg-card hover:bg-background"
                 >
-                  {copied ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4" />}
+                  {copied ? (
+                    <Check className="h-4 w-4 text-primary" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
                 </button>
               </div>
             </div>

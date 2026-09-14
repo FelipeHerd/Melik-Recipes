@@ -91,7 +91,10 @@ function assertUrlsWhitelisted(text: string, label: string): void {
   const urlRe = /https?:\/\/([^\s)/"'<>]+)/gi;
   let m: RegExpExecArray | null;
   while ((m = urlRe.exec(text)) !== null) {
-    const host = m[1]!.split("/")[0]!.toLowerCase().replace(/^www\./, "");
+    const host = m[1]!
+      .split("/")[0]!
+      .toLowerCase()
+      .replace(/^www\./, "");
     if (!notifUrlWhitelist().has(host)) {
       throw new Error(
         `APP-VAL-003: ${label} contiene un enlace a un dominio no permitido (${host}).`,
@@ -108,8 +111,7 @@ function renderForRecipient(
 ): { title: string; message: string } {
   const rawTitle = customOverride?.title ?? template.title;
   const rawMessage = customOverride?.message ?? template.message;
-  const nombre =
-    (profile?.first_name?.trim() || profile?.username?.trim() || "hola").trim();
+  const nombre = (profile?.first_name?.trim() || profile?.username?.trim() || "hola").trim();
 
   const substitute = (s: string): string => {
     // {nombre} y {ctx.KEY}
@@ -146,8 +148,7 @@ const SEGMENTS = [
 ] as const;
 type Segment = (typeof SEGMENTS)[number];
 
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 async function resolveSegment(segment: Segment, callerRoleName: Role): Promise<string[]> {
   const { db } = await import("@/lib/db.server");
@@ -160,7 +161,11 @@ async function resolveSegment(segment: Segment, callerRoleName: Role): Promise<s
   const now = new Date();
   let rows: { id: string }[] = [];
   if (segment === "all") {
-    rows = await db.selectFrom("profiles").select(["id"]).limit(HARD_CAP + 1).execute();
+    rows = await db
+      .selectFrom("profiles")
+      .select(["id"])
+      .limit(HARD_CAP + 1)
+      .execute();
   } else if (segment === "melik_plus_active") {
     const data = await db
       .selectFrom("profiles")
@@ -242,7 +247,10 @@ export const listNotificationTemplates = createServerFn({ method: "GET" })
 
 const resolveSchema = z.object({
   mode: z.enum(["users", "segment", "uuids"]),
-  userIds: z.array(z.string().uuid()).max(HARD_CAP + 1).optional(),
+  userIds: z
+    .array(z.string().uuid())
+    .max(HARD_CAP + 1)
+    .optional(),
   segment: z.enum(SEGMENTS).optional(),
   uuidsText: z.string().max(200_000).optional(),
 });
@@ -290,7 +298,11 @@ export const resolveNotificationTargets = createServerFn({ method: "POST" })
       }
       // Solo IDs que existen en profiles.
       if (ids.length > 0) {
-        const profs = await db.selectFrom("profiles").select(["id"]).where("id", "in", ids).execute();
+        const profs = await db
+          .selectFrom("profiles")
+          .select(["id"])
+          .where("id", "in", ids)
+          .execute();
         const real = new Set(profs.map((p) => p.id));
         invalid = invalid.concat(ids.filter((id) => !real.has(id)));
         ids = ids.filter((id) => real.has(id));
@@ -392,10 +404,11 @@ async function checkRateLimit(adminId: string, targetsCount: number): Promise<vo
     const c = Number((a.metadata as { targets_count?: number } | null)?.targets_count ?? 0);
     return c > RATE_LIMIT_HOUR_THRESHOLD;
   }).length;
-  if (targetsCount > RATE_LIMIT_HOUR_THRESHOLD && broadcastsThisHour >= RATE_LIMIT_HOUR_BROADCASTS) {
-    throw new Error(
-      "APP-RATE-001: Limite alcanzado - max. 3 broadcasts (>50 dst) por hora.",
-    );
+  if (
+    targetsCount > RATE_LIMIT_HOUR_THRESHOLD &&
+    broadcastsThisHour >= RATE_LIMIT_HOUR_BROADCASTS
+  ) {
+    throw new Error("APP-RATE-001: Limite alcanzado - max. 3 broadcasts (>50 dst) por hora.");
   }
 
   const dayAudits = await db
@@ -410,9 +423,7 @@ async function checkRateLimit(adminId: string, targetsCount: number): Promise<vo
     0,
   );
   if (sentToday + targetsCount > RATE_LIMIT_DAY_TOTAL) {
-    throw new Error(
-      `APP-RATE-002: Limite diario alcanzado (${RATE_LIMIT_DAY_TOTAL} notif./dia).`,
-    );
+    throw new Error(`APP-RATE-002: Limite diario alcanzado (${RATE_LIMIT_DAY_TOTAL} notif./dia).`);
   }
 }
 
@@ -437,21 +448,21 @@ async function verifyAdminPasswordOrThrow(adminId: string, password: string): Pr
     .where("created_at", ">=", since)
     .execute();
   if (fails.length >= STEPUP_FAIL_MAX) {
-    throw new Error(
-      "APP-PERM-005: Demasiados intentos fallidos. Espera 15 minutos.",
-    );
+    throw new Error("APP-PERM-005: Demasiados intentos fallidos. Espera 15 minutos.");
   }
 
-  const admin = await db.selectFrom("users").select(["password_hash"]).where("id", "=", adminId).executeTakeFirst();
+  const admin = await db
+    .selectFrom("users")
+    .select(["password_hash"])
+    .where("id", "=", adminId)
+    .executeTakeFirst();
   const ok = admin ? await comparePassword(password, admin.password_hash) : false;
   if (!ok) {
     await db
       .insertInto("admin_audit_log")
       .values({ admin_id: adminId, action: "notification_stepup_fail", metadata: toJsonb({}) })
       .execute();
-    throw new Error(
-      "APP-PERM-004: Contrasena incorrecta. Vuelve a intentarlo.",
-    );
+    throw new Error("APP-PERM-004: Contrasena incorrecta. Vuelve a intentarlo.");
   }
 
   await db
@@ -499,9 +510,7 @@ export const sendAdminNotification = createServerFn({ method: "POST" })
         (k) => !data.ctx || !data.ctx[k] || data.ctx[k]!.trim() === "",
       );
       if (missing.length > 0) {
-        throw new Error(
-          `APP-VAL-009: Faltan valores de contexto: ${missing.join(", ")}.`,
-        );
+        throw new Error(`APP-VAL-009: Faltan valores de contexto: ${missing.join(", ")}.`);
       }
       for (const key of Object.keys(data.ctx ?? {})) {
         sanitizeText(data.ctx![key]!, 200, `ctx.${key}`);
@@ -513,9 +522,7 @@ export const sendAdminNotification = createServerFn({ method: "POST" })
     const uniqIds = Array.from(new Set(data.userIds));
     if (uniqIds.length === 0) throw new Error("APP-VAL-010: Sin destinatarios.");
     if (uniqIds.length > HARD_CAP) {
-      throw new Error(
-        `APP-VAL-011: Cap ${HARD_CAP} destinatarios. Segmenta el envio.`,
-      );
+      throw new Error(`APP-VAL-011: Cap ${HARD_CAP} destinatarios. Segmenta el envio.`);
     }
 
     // Step-up: SIEMPRE exigimos que el admin re-confirme su contrasena,
@@ -544,7 +551,8 @@ export const sendAdminNotification = createServerFn({ method: "POST" })
       if (!prev || prev.admin_id !== context.userId) {
         throw new Error("APP-VAL-013: Reintento invalido.");
       }
-      const failed = ((prev.metadata as { failed_ids?: string[] } | null)?.failed_ids ?? []) as string[];
+      const failed = ((prev.metadata as { failed_ids?: string[] } | null)?.failed_ids ??
+        []) as string[];
       toInsertIds = failed.filter((id) => uniqIds.includes(id));
       if (toInsertIds.length === 0) {
         throw new Error("APP-VAL-014: No hay fallos a reintentar en ese batch.");
@@ -574,9 +582,7 @@ export const sendAdminNotification = createServerFn({ method: "POST" })
       .executeTakeFirst();
 
     if (!auditPreInsert) {
-      throw new Error(
-        "APP-SYS-001: No se pudo registrar el envio. Reintenta.",
-      );
+      throw new Error("APP-SYS-001: No se pudo registrar el envio. Reintenta.");
     }
     const auditRowId = auditPreInsert.id;
 
@@ -709,10 +715,16 @@ export const listNotificationHistory = createServerFn({ method: "POST" })
       .limit(limit)
       .execute();
 
-    const adminIds = Array.from(new Set(rows.map((r) => r.admin_id).filter((id): id is string => !!id)));
+    const adminIds = Array.from(
+      new Set(rows.map((r) => r.admin_id).filter((id): id is string => !!id)),
+    );
     const profs =
       adminIds.length > 0
-        ? await db.selectFrom("profiles").select(["id", "username", "first_name"]).where("id", "in", adminIds).execute()
+        ? await db
+            .selectFrom("profiles")
+            .select(["id", "username", "first_name"])
+            .where("id", "in", adminIds)
+            .execute()
         : [];
     const profMap = new Map(profs.map((p) => [p.id, p]));
 

@@ -33,6 +33,10 @@ export const uploadAvatar = createServerFn({ method: "POST" })
     // timestamp query param to force the browser to refetch the new image.
     const avatarUrl = `${signedUrl}&t=${Date.now()}`;
 
-    await db.updateTable("profiles").set({ avatar_url: avatarUrl }).where("id", "=", context.userId).execute();
+    await db
+      .updateTable("profiles")
+      .set({ avatar_url: avatarUrl })
+      .where("id", "=", context.userId)
+      .execute();
     return { avatarUrl };
   });

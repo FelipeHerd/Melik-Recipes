@@ -8,6 +8,7 @@ export const PASSWORD_RULES = [
   { id: "sym", label: "Un carácter especial", test: (s: string) => /[^A-Za-z0-9]/.test(s) },
 ] as const;
 
+// eslint-disable-next-line react-refresh/only-export-components -- shared helper colocated with the component that uses it
 export function isPasswordStrong(pw: string): boolean {
   return PASSWORD_RULES.every((r) => r.test(pw));
 }
@@ -18,7 +19,10 @@ export function PasswordChecklist({ value }: { value: string }) {
       {PASSWORD_RULES.map((r) => {
         const ok = r.test(value);
         return (
-          <li key={r.id} className={"flex items-center gap-2 " + (ok ? "text-primary" : "text-muted-foreground")}>
+          <li
+            key={r.id}
+            className={"flex items-center gap-2 " + (ok ? "text-primary" : "text-muted-foreground")}
+          >
             <span
               className={
                 "grid h-4 w-4 place-items-center rounded-full " +

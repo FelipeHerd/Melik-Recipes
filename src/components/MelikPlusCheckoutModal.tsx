@@ -154,11 +154,7 @@ export function MelikPlusCheckoutModal({
       onClick={onClose}
     >
       <style>{SHAKE_CSS}</style>
-      <div
-        key={shakeKey.current}
-        onClick={(e) => e.stopPropagation()}
-        className={dialogClass}
-      >
+      <div key={shakeKey.current} onClick={(e) => e.stopPropagation()} className={dialogClass}>
         <button
           type="button"
           aria-label="Cerrar"
@@ -360,8 +356,8 @@ export function MelikPlusCheckoutModal({
                   {provider === "stripe"
                     ? "Pagar con Stripe"
                     : provider === "mercadopago"
-                    ? "Pagar con MercadoPago"
-                    : "Simular Pago Exitoso"}
+                      ? "Pagar con MercadoPago"
+                      : "Simular Pago Exitoso"}
                 </button>
 
                 <div className="grid grid-cols-2 gap-2 pt-1">
@@ -412,8 +408,8 @@ function PaymentConnectionErrorAlert({
     providerRaw === "stripe"
       ? "Stripe"
       : providerRaw === "mercadopago"
-      ? "MercadoPago"
-      : "Pasarela de Pagos";
+        ? "MercadoPago"
+        : "Pasarela de Pagos";
 
   const displayMsg =
     errorDetails?.message ||
@@ -442,9 +438,7 @@ function PaymentConnectionErrorAlert({
               {errorCode}
             </span>
           </div>
-          <p className="mt-1 text-xs leading-relaxed text-foreground/85">
-            {displayMsg}
-          </p>
+          <p className="mt-1 text-xs leading-relaxed text-foreground/85">{displayMsg}</p>
           <button
             type="button"
             onClick={onRetry}
@@ -470,11 +464,7 @@ function SuccessScreen({ onGoToRecipes }: { onGoToRecipes: () => void }) {
           aria-hidden="true"
           className="absolute inset-0 rounded-full bg-[color:var(--ochre)]/20 melik-halo"
         />
-        <svg
-          viewBox="0 0 52 52"
-          className="relative h-20 w-20"
-          aria-hidden="true"
-        >
+        <svg viewBox="0 0 52 52" className="relative h-20 w-20" aria-hidden="true">
           <circle
             cx="26"
             cy="26"

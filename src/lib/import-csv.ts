@@ -9,7 +9,6 @@ export type ParsedRecipeRow = {
   originalAuthor?: string;
 };
 
-
 // RFC-4180-ish CSV parser: quoted fields, escaped quotes ("") and CRLF/LF.
 function parseCsv(text: string): string[][] {
   // Strip BOM
@@ -57,7 +56,14 @@ function parseCsv(text: string): string[][] {
   return rows.filter((r) => r.length > 0 && !(r.length === 1 && r[0] === ""));
 }
 
-const EXPECTED_HEADERS = ["title", "category", "time_minutes", "ingredients", "instructions", "created_at"];
+const EXPECTED_HEADERS = [
+  "title",
+  "category",
+  "time_minutes",
+  "ingredients",
+  "instructions",
+  "created_at",
+];
 
 export function parseRecipesCsv(text: string): ParsedRecipeRow[] {
   const rows = parseCsv(text);
@@ -73,9 +79,7 @@ export function parseRecipesCsv(text: string): ParsedRecipeRow[] {
   const iImage = idx("image_url");
   const iAuthor = idx("original_author");
   if (iTitle === -1) {
-    throw new Error(
-      "APP-CSV-001: header missing. Expected: " + EXPECTED_HEADERS.join(", "),
-    );
+    throw new Error("APP-CSV-001: header missing. Expected: " + EXPECTED_HEADERS.join(", "));
   }
 
   const out: ParsedRecipeRow[] = [];
@@ -103,8 +107,8 @@ export function parseRecipesCsv(text: string): ParsedRecipeRow[] {
       title: title.slice(0, 200),
       category: (iCategory !== -1 ? (row[iCategory] ?? "").trim() : "") || "Otro",
       timeMinutes,
-      ingredients: iIng !== -1 ? row[iIng] ?? "" : "",
-      instructions: iInst !== -1 ? row[iInst] ?? "" : "",
+      ingredients: iIng !== -1 ? (row[iIng] ?? "") : "",
+      instructions: iInst !== -1 ? (row[iInst] ?? "") : "",
       imageUrl: imageUrl || undefined,
       createdAt,
       originalAuthor,

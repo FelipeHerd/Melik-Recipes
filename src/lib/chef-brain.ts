@@ -17,13 +17,85 @@ export function tokenize(s: string): string[] {
 }
 
 const STOPWORDS = new Set([
-  "el","la","los","las","un","una","unos","unas","de","del","y","o","u","a","al",
-  "en","con","sin","para","por","que","como","es","son","mi","tu","se","lo","le",
-  "me","te","muy","ya","si","no","pero","tambien","tampoco","muy","casi","bien",
-  "porfa","porfavor","favor","puedes","podrias","quiero","necesito","tengo","hay",
-  "voy","vamos","quisiera","ahora","luego","hoy","manana","mañana","cocinar","hacer",
-  "preparar","receta","recetas","plato","comida","algo","cosa","ese","esa","esto",
-  "eso","aquel","aquella","mas","menos","poco","mucho","favorita","favorito",
+  "el",
+  "la",
+  "los",
+  "las",
+  "un",
+  "una",
+  "unos",
+  "unas",
+  "de",
+  "del",
+  "y",
+  "o",
+  "u",
+  "a",
+  "al",
+  "en",
+  "con",
+  "sin",
+  "para",
+  "por",
+  "que",
+  "como",
+  "es",
+  "son",
+  "mi",
+  "tu",
+  "se",
+  "lo",
+  "le",
+  "me",
+  "te",
+  "muy",
+  "ya",
+  "si",
+  "no",
+  "pero",
+  "tambien",
+  "tampoco",
+  "muy",
+  "casi",
+  "bien",
+  "porfa",
+  "porfavor",
+  "favor",
+  "puedes",
+  "podrias",
+  "quiero",
+  "necesito",
+  "tengo",
+  "hay",
+  "voy",
+  "vamos",
+  "quisiera",
+  "ahora",
+  "luego",
+  "hoy",
+  "manana",
+  "mañana",
+  "cocinar",
+  "hacer",
+  "preparar",
+  "receta",
+  "recetas",
+  "plato",
+  "comida",
+  "algo",
+  "cosa",
+  "ese",
+  "esa",
+  "esto",
+  "eso",
+  "aquel",
+  "aquella",
+  "mas",
+  "menos",
+  "poco",
+  "mucho",
+  "favorita",
+  "favorito",
 ]);
 
 function contentTokens(s: string): string[] {
@@ -34,7 +106,8 @@ function contentTokens(s: string): string[] {
 function editDistance(a: string, b: string, cap = 3): number {
   if (a === b) return 0;
   if (Math.abs(a.length - b.length) > cap) return cap + 1;
-  const m = a.length, n = b.length;
+  const m = a.length,
+    n = b.length;
   const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
   for (let i = 0; i <= m; i++) dp[i][0] = i;
   for (let j = 0; j <= n; j++) dp[0][j] = j;
@@ -42,11 +115,7 @@ function editDistance(a: string, b: string, cap = 3): number {
     let rowMin = Infinity;
     for (let j = 1; j <= n; j++) {
       const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      dp[i][j] = Math.min(
-        dp[i - 1][j] + 1,
-        dp[i][j - 1] + 1,
-        dp[i - 1][j - 1] + cost,
-      );
+      dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
       if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
         dp[i][j] = Math.min(dp[i][j], dp[i - 2][j - 2] + 1);
       }
@@ -111,19 +180,112 @@ export function rankRecipes(query: string, recipes: Recipe[]): RecipeMatch[] {
 // ============ Ingredient extraction ============
 
 const BASE_INGREDIENTS = [
-  "tomate","tomates","queso","mozzarella","parmesano","cheddar","huevo","huevos",
-  "harina","leche","pollo","arroz","pasta","fideos","cebolla","cebolleta","ajo",
-  "albahaca","perejil","cilantro","oregano","romero","tomillo","carne","ternera",
-  "res","cerdo","atun","atún","salmon","salmón","pescado","papa","papas","patata",
-  "patatas","zanahoria","zanahorias","espinaca","espinacas","lechuga","limon","limón",
-  "lima","manzana","manzanas","platano","plátano","banana","avena","mantequilla",
-  "margarina","azucar","azúcar","sal","pimienta","aceite","oliva","pan","jamon",
-  "jamón","tocino","bacon","yogur","yogurt","crema","nata","chocolate","cacao",
-  "vainilla","canela","levadura","polvo de hornear","bicarbonato","miel","nueces",
-  "almendras","pasas","fresa","fresas","frambuesa","arandanos","arándanos","maiz",
-  "maíz","frijol","frijoles","lentejas","garbanzos","brocoli","brócoli","coliflor",
-  "calabacin","calabacín","berenjena","pimiento","champiñon","champiñón","champiñones",
-  "agua","caldo","vino","cerveza","salsa de tomate","salsa de soya","soja",
+  "tomate",
+  "tomates",
+  "queso",
+  "mozzarella",
+  "parmesano",
+  "cheddar",
+  "huevo",
+  "huevos",
+  "harina",
+  "leche",
+  "pollo",
+  "arroz",
+  "pasta",
+  "fideos",
+  "cebolla",
+  "cebolleta",
+  "ajo",
+  "albahaca",
+  "perejil",
+  "cilantro",
+  "oregano",
+  "romero",
+  "tomillo",
+  "carne",
+  "ternera",
+  "res",
+  "cerdo",
+  "atun",
+  "atún",
+  "salmon",
+  "salmón",
+  "pescado",
+  "papa",
+  "papas",
+  "patata",
+  "patatas",
+  "zanahoria",
+  "zanahorias",
+  "espinaca",
+  "espinacas",
+  "lechuga",
+  "limon",
+  "limón",
+  "lima",
+  "manzana",
+  "manzanas",
+  "platano",
+  "plátano",
+  "banana",
+  "avena",
+  "mantequilla",
+  "margarina",
+  "azucar",
+  "azúcar",
+  "sal",
+  "pimienta",
+  "aceite",
+  "oliva",
+  "pan",
+  "jamon",
+  "jamón",
+  "tocino",
+  "bacon",
+  "yogur",
+  "yogurt",
+  "crema",
+  "nata",
+  "chocolate",
+  "cacao",
+  "vainilla",
+  "canela",
+  "levadura",
+  "polvo de hornear",
+  "bicarbonato",
+  "miel",
+  "nueces",
+  "almendras",
+  "pasas",
+  "fresa",
+  "fresas",
+  "frambuesa",
+  "arandanos",
+  "arándanos",
+  "maiz",
+  "maíz",
+  "frijol",
+  "frijoles",
+  "lentejas",
+  "garbanzos",
+  "brocoli",
+  "brócoli",
+  "coliflor",
+  "calabacin",
+  "calabacín",
+  "berenjena",
+  "pimiento",
+  "champiñon",
+  "champiñón",
+  "champiñones",
+  "agua",
+  "caldo",
+  "vino",
+  "cerveza",
+  "salsa de tomate",
+  "salsa de soya",
+  "soja",
 ];
 
 let dynamicVocab: Set<string> | null = null;
@@ -158,11 +320,28 @@ export function extractIngredients(text: string, recipes: Recipe[]): string[] {
 // ============ Substitutions & conversions ============
 
 const SUBSTITUTIONS: Record<string, string[]> = {
-  mantequilla: ["aceite vegetal (3/4 de la cantidad)", "margarina", "puré de aguacate (1:1) para hornear"],
-  huevo: ["1 cda de linaza + 3 cdas de agua (reposar 5 min)", "1/4 taza de puré de manzana", "1/2 plátano machacado"],
-  leche: ["leche de almendras", "leche de avena", "leche de soya", "agua + 1 cda de mantequilla por taza"],
+  mantequilla: [
+    "aceite vegetal (3/4 de la cantidad)",
+    "margarina",
+    "puré de aguacate (1:1) para hornear",
+  ],
+  huevo: [
+    "1 cda de linaza + 3 cdas de agua (reposar 5 min)",
+    "1/4 taza de puré de manzana",
+    "1/2 plátano machacado",
+  ],
+  leche: [
+    "leche de almendras",
+    "leche de avena",
+    "leche de soya",
+    "agua + 1 cda de mantequilla por taza",
+  ],
   azucar: ["miel (usa 3/4 y reduce líquido)", "panela rallada", "azúcar mascabado"],
-  harina: ["avena molida", "harina integral (puede quedar más densa)", "mezcla de almendra + maicena"],
+  harina: [
+    "avena molida",
+    "harina integral (puede quedar más densa)",
+    "mezcla de almendra + maicena",
+  ],
   "polvo de hornear": ["1/4 cdita bicarbonato + 1/2 cdita crema tártara por cdita"],
   crema: ["leche evaporada", "yogurt griego", "leche de coco espesa"],
   aceite: ["mantequilla derretida", "puré de manzana en repostería"],
@@ -181,17 +360,42 @@ export function findSubstitution(text: string): { for: string; options: string[]
 }
 
 const VOLUME_ML: Record<string, number> = {
-  taza: 240, tazas: 240, cup: 240, cups: 240,
-  cda: 15, cdas: 15, cucharada: 15, cucharadas: 15,
-  cdita: 5, cditas: 5, cucharadita: 5, cucharaditas: 5,
-  ml: 1, l: 1000, litro: 1000, litros: 1000,
-  onza: 30, onzas: 30, oz: 30,
+  taza: 240,
+  tazas: 240,
+  cup: 240,
+  cups: 240,
+  cda: 15,
+  cdas: 15,
+  cucharada: 15,
+  cucharadas: 15,
+  cdita: 5,
+  cditas: 5,
+  cucharadita: 5,
+  cucharaditas: 5,
+  ml: 1,
+  l: 1000,
+  litro: 1000,
+  litros: 1000,
+  onza: 30,
+  onzas: 30,
+  oz: 30,
 };
 const MASS_G: Record<string, number> = {
-  g: 1, gr: 1, gramo: 1, gramos: 1,
-  kg: 1000, kilo: 1000, kilos: 1000, kilogramo: 1000, kilogramos: 1000,
-  lb: 453.592, libra: 453.592, libras: 453.592,
-  oz: 28.3495, onza: 28.3495, onzas: 28.3495,
+  g: 1,
+  gr: 1,
+  gramo: 1,
+  gramos: 1,
+  kg: 1000,
+  kilo: 1000,
+  kilos: 1000,
+  kilogramo: 1000,
+  kilogramos: 1000,
+  lb: 453.592,
+  libra: 453.592,
+  libras: 453.592,
+  oz: 28.3495,
+  onza: 28.3495,
+  onzas: 28.3495,
 };
 
 export function tryConvert(text: string): string | null {
@@ -252,10 +456,21 @@ export type BrainMemory = {
 function resolveOrdinal(text: string, recipes: Recipe[], suggestedIds: string[]): Recipe | null {
   const n = normalize(text);
   const map: Record<string, number> = {
-    primera: 0, primero: 0, "1": 0, uno: 0,
-    segunda: 1, segundo: 1, "2": 1, dos: 1,
-    tercera: 2, tercero: 2, "3": 2, tres: 2,
-    cuarta: 3, cuarto: 3, "4": 3,
+    primera: 0,
+    primero: 0,
+    "1": 0,
+    uno: 0,
+    segunda: 1,
+    segundo: 1,
+    "2": 1,
+    dos: 1,
+    tercera: 2,
+    tercero: 2,
+    "3": 2,
+    tres: 2,
+    cuarta: 3,
+    cuarto: 3,
+    "4": 3,
   };
   for (const k of Object.keys(map)) {
     if (new RegExp(`\\b${k}\\b`).test(n)) {
@@ -273,24 +488,39 @@ export function detectIntent(text: string, recipes: Recipe[], memory: BrainMemor
   const n = normalize(text);
   const ingredients = extractIngredients(text, recipes);
 
-  if (/^(hola|holi|buenas|hey|que tal|qué tal|saludos|buenos dias|buenas tardes|buenas noches)\b/.test(n))
+  if (
+    /^(hola|holi|buenas|hey|que tal|qué tal|saludos|buenos dias|buenas tardes|buenas noches)\b/.test(
+      n,
+    )
+  )
     return { type: "greet" };
-  if (/^(gracias|muchas gracias|mil gracias|thank|thanks|grax)/.test(n))
-    return { type: "thanks" };
-  if (/\b(ayuda|que puedes hacer|qué puedes hacer|que sabes hacer|qué sabes hacer|como funciona|cómo funciona|help)\b/.test(n))
+  if (/^(gracias|muchas gracias|mil gracias|thank|thanks|grax)/.test(n)) return { type: "thanks" };
+  if (
+    /\b(ayuda|que puedes hacer|qué puedes hacer|que sabes hacer|qué sabes hacer|como funciona|cómo funciona|help)\b/.test(
+      n,
+    )
+  )
     return { type: "help" };
 
   // Step navigation (requires active recipe)
   if (memory.activeRecipeId) {
     if (/\b(cancelar|salir|parar|dejar|terminar guia|terminar guía|olvidalo|olvídalo)\b/.test(n))
       return { type: "cancel_guide" };
-    if (/\b(siguiente|próximo|proximo|listo|hecho|ya esta|ya está|continuar|sigue|next|avanzar)\b/.test(n))
+    if (
+      /\b(siguiente|próximo|proximo|listo|hecho|ya esta|ya está|continuar|sigue|next|avanzar)\b/.test(
+        n,
+      )
+    )
       return { type: "next_step" };
     if (/\b(anterior|atras|atrás|previo|regresa|volver|back)\b/.test(n))
       return { type: "prev_step" };
     if (/\b(repite|repetir|otra vez|de nuevo|repetí|repeti)\b/.test(n))
       return { type: "repeat_step" };
-    if (/\b(en que paso|en qué paso|cual era|cuál era|paso actual|donde voy|dónde voy|que sigue|qué sigue)\b/.test(n))
+    if (
+      /\b(en que paso|en qué paso|cual era|cuál era|paso actual|donde voy|dónde voy|que sigue|qué sigue)\b/.test(
+        n,
+      )
+    )
       return { type: "current_step" };
   }
 
@@ -307,25 +537,38 @@ export function detectIntent(text: string, recipes: Recipe[], memory: BrainMemor
   // List / count
   if (/\b(cuantas|cuántas)\b.*\b(recetas)\b/.test(n) || /\bcuantas tengo\b/.test(n))
     return { type: "count_recipes" };
-  if (/\b(lista|listar|mostrar|muestrame|muéstrame|ver|enseñame|enseñame)\b.*\b(recetas|todas)\b/.test(n) ||
-      /^(mis recetas|todas las recetas|que recetas tengo|qué recetas tengo)/.test(n))
+  if (
+    /\b(lista|listar|mostrar|muestrame|muéstrame|ver|enseñame|enseñame)\b.*\b(recetas|todas)\b/.test(
+      n,
+    ) ||
+    /^(mis recetas|todas las recetas|que recetas tengo|qué recetas tengo)/.test(n)
+  )
     return { type: "list_recipes" };
 
   // Random
-  if (/\b(sorpr[eé]ndeme|al azar|aleatorio|cualquier|random|elige tu|tu eliges|tú eliges)\b/.test(n))
+  if (
+    /\b(sorpr[eé]ndeme|al azar|aleatorio|cualquier|random|elige tu|tu eliges|tú eliges)\b/.test(n)
+  )
     return { type: "random_recipe" };
 
   // Recipe-targeted intents — try to identify a recipe
   const recipe =
-    findBestRecipe(text, recipes, 30) ??
-    resolveOrdinal(text, recipes, memory.suggestedRecipeIds);
+    findBestRecipe(text, recipes, 30) ?? resolveOrdinal(text, recipes, memory.suggestedRecipeIds);
 
   if (recipe) {
     if (/\b(ingredientes|que lleva|qué lleva|que tiene|qué tiene|de que es|de qué es)\b/.test(n))
       return { type: "ingredients_of", recipe };
-    if (/\b(cuanto tarda|cuánto tarda|cuanto toma|cuánto toma|tiempo|cuanto dura|cuánto dura)\b/.test(n))
+    if (
+      /\b(cuanto tarda|cuánto tarda|cuanto toma|cuánto toma|tiempo|cuanto dura|cuánto dura)\b/.test(
+        n,
+      )
+    )
       return { type: "time_of", recipe };
-    if (/\b(gui|cocin|hagamos|hacemos|prepar|paso a paso|empez|empec|vamos con|ensename a hacer|enséñame a hacer|como se hace|cómo se hace)\w*/.test(n))
+    if (
+      /\b(gui|cocin|hagamos|hacemos|prepar|paso a paso|empez|empec|vamos con|ensename a hacer|enséñame a hacer|como se hace|cómo se hace)\w*/.test(
+        n,
+      )
+    )
       return { type: "guide_recipe", recipe };
     if (/\b(abre|abrir|muestra|mostrar|ver|enseña|enseñame|enséñame|detalle|info)\b/.test(n))
       return { type: "open_recipe", recipe };
@@ -334,15 +577,28 @@ export function detectIntent(text: string, recipes: Recipe[], memory: BrainMemor
   }
 
   // Category search
-  const CATS = ["desayuno","postre","entrada","plato principal","bebida","snack","cena","almuerzo"];
+  const CATS = [
+    "desayuno",
+    "postre",
+    "entrada",
+    "plato principal",
+    "bebida",
+    "snack",
+    "cena",
+    "almuerzo",
+  ];
   for (const c of CATS) {
     if (n.includes(c)) return { type: "search_category", category: c };
   }
 
   // Suggest by ingredients
   const allIng = Array.from(new Set([...memory.mentionedIngredients, ...ingredients]));
-  if (ingredients.length > 0 ||
-      /\b(tengo|sugiere|sugerir|sugerencia|que cocino|qué cocino|que hago|qué hago|que puedo hacer|qué puedo hacer|ideas?|recomienda|recomiendame|recomiéndame)\b/.test(n)) {
+  if (
+    ingredients.length > 0 ||
+    /\b(tengo|sugiere|sugerir|sugerencia|que cocino|qué cocino|que hago|qué hago|que puedo hacer|qué puedo hacer|ideas?|recomienda|recomiendame|recomiéndame)\b/.test(
+      n,
+    )
+  ) {
     return { type: "what_to_cook", ingredients: allIng };
   }
 
@@ -362,5 +618,8 @@ export function suggestByIngredients(ings: string[], recipes: Recipe[], limit = 
     return { r, hits, score };
   });
   scored.sort((a, b) => b.score - a.score);
-  return scored.filter((x) => x.hits > 0).slice(0, limit).map((x) => x.r);
+  return scored
+    .filter((x) => x.hits > 0)
+    .slice(0, limit)
+    .map((x) => x.r);
 }

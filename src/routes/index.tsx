@@ -38,13 +38,19 @@ const QrScannerModal = lazy(() =>
 );
 
 export const Route = createFileRoute("/")({
-
   head: () => ({
     meta: [
       { title: "Mis Recetas — Melik Recipes" },
-      { name: "description", content: "Organiza, busca y cocina tus recetas favoritas con ayuda de un asistente IA en Melik Recipes." },
+      {
+        name: "description",
+        content:
+          "Organiza, busca y cocina tus recetas favoritas con ayuda de un asistente IA en Melik Recipes.",
+      },
       { property: "og:title", content: "Mis Recetas — Melik Recipes" },
-      { property: "og:description", content: "Organiza, busca y cocina tus recetas favoritas con ayuda de un asistente IA." },
+      {
+        property: "og:description",
+        content: "Organiza, busca y cocina tus recetas favoritas con ayuda de un asistente IA.",
+      },
       { property: "og:url", content: "https://melik-recipes.lovable.app/" },
     ],
     links: [{ rel: "canonical", href: "https://melik-recipes.lovable.app/" }],
@@ -106,8 +112,14 @@ function Home() {
     observer.observe(container);
     return () => observer.disconnect();
   }, []);
-  const viewing = useMemo(() => recipes.find((r) => r.id === viewingId) ?? null, [recipes, viewingId]);
-  const editing = useMemo(() => recipes.find((r) => r.id === editingId) ?? null, [recipes, editingId]);
+  const viewing = useMemo(
+    () => recipes.find((r) => r.id === viewingId) ?? null,
+    [recipes, viewingId],
+  );
+  const editing = useMemo(
+    () => recipes.find((r) => r.id === editingId) ?? null,
+    [recipes, editingId],
+  );
 
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -150,19 +162,26 @@ function Home() {
   return (
     <div className="mx-auto max-w-6xl px-5 py-8 md:py-12">
       <div className="flex flex-col gap-2">
-        <p className="text-sm font-medium uppercase tracking-wider text-[color:var(--ochre)]">Tu recetario</p>
+        <p className="text-sm font-medium uppercase tracking-wider text-[color:var(--ochre)]">
+          Tu recetario
+        </p>
         <h1 className="font-display text-4xl font-semibold md:text-5xl">Mis Recetas</h1>
         <p className="max-w-xl text-muted-foreground">
-          Guarda recetas de cualquier fuente y deja que el asistente te guíe paso a paso cuando cocines.
+          Guarda recetas de cualquier fuente y deja que el asistente te guíe paso a paso cuando
+          cocines.
         </p>
       </div>
 
       {!isAuthenticated && (
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-dashed border-border bg-card/50 px-5 py-3 text-sm">
           <span className="text-foreground/80">
-            Estás navegando como invitado. <strong>Inicia sesión</strong> para guardar tus recetas en la nube y verlas desde cualquier dispositivo.
+            Estás navegando como invitado. <strong>Inicia sesión</strong> para guardar tus recetas
+            en la nube y verlas desde cualquier dispositivo.
           </span>
-          <Link to="/auth" className="inline-flex h-9 items-center rounded-xl bg-primary px-4 text-xs font-medium text-primary-foreground hover:bg-primary/90">
+          <Link
+            to="/auth"
+            className="inline-flex h-9 items-center rounded-xl bg-primary px-4 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+          >
             Iniciar sesión
           </Link>
         </div>
@@ -210,7 +229,9 @@ function Home() {
           >
             <option value="__all">Todas las categorías</option>
             {categories.map((c) => (
-              <option key={c} value={c}>{c}</option>
+              <option key={c} value={c}>
+                {c}
+              </option>
             ))}
           </select>
         </div>
@@ -292,7 +313,9 @@ function Home() {
           ) : (
             <>
               <p className="font-display text-xl">Aún no hay recetas que coincidan.</p>
-              <p className="mt-1 text-sm text-muted-foreground">Prueba con otro término o añade una nueva.</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Prueba con otro término o añade una nueva.
+              </p>
             </>
           )}
         </div>
@@ -388,7 +411,15 @@ function Home() {
   );
 }
 
-function RecipeCard({ recipe, onOpen, onDelete }: { recipe: Recipe; onOpen: () => void; onDelete: () => void }) {
+function RecipeCard({
+  recipe,
+  onOpen,
+  onDelete,
+}: {
+  recipe: Recipe;
+  onOpen: () => void;
+  onDelete: () => void;
+}) {
   const custom = !recipe.imageUrl && isCustomCategory(recipe.category);
   const preview = useMemo(() => ingredientsToText(recipe.ingredients), [recipe.ingredients]);
   return (
@@ -416,7 +447,9 @@ function RecipeCard({ recipe, onOpen, onDelete }: { recipe: Recipe; onOpen: () =
             className="h-full w-full object-cover"
           />
         ) : custom ? null : (
-          <span className="text-6xl" aria-hidden>{recipe.emoji}</span>
+          <span className="text-6xl" aria-hidden>
+            {recipe.emoji}
+          </span>
         )}
         <span className="absolute left-3 top-3 rounded-full bg-background/80 px-2.5 py-1 text-xs font-medium text-foreground/80 backdrop-blur">
           {recipe.category}
@@ -431,7 +464,9 @@ function RecipeCard({ recipe, onOpen, onDelete }: { recipe: Recipe; onOpen: () =
       </button>
       <div className="flex flex-1 flex-col gap-3 p-5">
         <button type="button" onClick={onOpen} className="text-left focus:outline-none">
-          <h2 className="font-display text-xl font-semibold leading-tight hover:text-primary">{recipe.title}</h2>
+          <h2 className="font-display text-xl font-semibold leading-tight hover:text-primary">
+            {recipe.title}
+          </h2>
         </button>
         <p className="line-clamp-2 whitespace-pre-line text-sm text-muted-foreground">{preview}</p>
         <div className="mt-auto flex items-center justify-between gap-2 pt-2">
@@ -462,4 +497,3 @@ function RecipeCard({ recipe, onOpen, onDelete }: { recipe: Recipe; onOpen: () =
 
 // ViewRecipeModal lives in @/components/ViewRecipeModal (shared with the
 // Melik Bakery + Descubrir routes and adds baker calculator support).
-

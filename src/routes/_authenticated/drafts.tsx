@@ -29,7 +29,10 @@ function DraftsPage() {
   const { drafts, isLoading, deleteDraft } = useDrafts(true);
   const { updateRecipe, isAuthenticated } = useRecipes();
   const [editingId, setEditingId] = useState<string | null>(null);
-  const editing = useMemo(() => drafts.find((d) => d.id === editingId) ?? null, [drafts, editingId]);
+  const editing = useMemo(
+    () => drafts.find((d) => d.id === editingId) ?? null,
+    [drafts, editingId],
+  );
 
   return (
     <div className="mx-auto max-w-6xl px-5 py-8 md:py-12">
@@ -42,7 +45,9 @@ function DraftsPage() {
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div>
-          <p className="text-xs font-medium uppercase tracking-wider text-[color:var(--ochre)]">No finalizadas</p>
+          <p className="text-xs font-medium uppercase tracking-wider text-[color:var(--ochre)]">
+            No finalizadas
+          </p>
           <h1 className="font-display text-3xl font-semibold md:text-4xl">Borradores</h1>
         </div>
       </header>
@@ -132,7 +137,9 @@ function DraftCard({
             className="h-full w-full object-cover"
           />
         ) : custom ? null : (
-          <span className="text-6xl" aria-hidden>{draft.emoji}</span>
+          <span className="text-6xl" aria-hidden>
+            {draft.emoji}
+          </span>
         )}
         <span className="absolute left-3 top-3 rounded-full bg-[color:var(--ochre)]/90 px-2.5 py-1 text-xs font-medium text-background backdrop-blur">
           Borrador
@@ -152,7 +159,9 @@ function DraftCard({
           </h2>
         </button>
         {preview && (
-          <p className="line-clamp-2 whitespace-pre-line text-sm text-muted-foreground">{preview}</p>
+          <p className="line-clamp-2 whitespace-pre-line text-sm text-muted-foreground">
+            {preview}
+          </p>
         )}
         <div className="mt-auto flex items-center justify-between gap-2 pt-2">
           <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">

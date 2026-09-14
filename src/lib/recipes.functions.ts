@@ -55,10 +55,17 @@ export type RecipeInput = z.infer<typeof recipeInputSchema>;
 // Vacuna #1 — Server-side paywall enforcement.
 // If a NON-premium user tries to set isPublic=false (make private), we force
 // it back to true. Never trust the client flag.
-async function enforcePublicFlag(userId: string, requested: boolean | undefined): Promise<boolean | undefined> {
+async function enforcePublicFlag(
+  userId: string,
+  requested: boolean | undefined,
+): Promise<boolean | undefined> {
   if (requested !== false) return requested;
   const { db } = await import("@/lib/db.server");
-  const row = await db.selectFrom("profiles").select(["is_premium"]).where("id", "=", userId).executeTakeFirst();
+  const row = await db
+    .selectFrom("profiles")
+    .select(["is_premium"])
+    .where("id", "=", userId)
+    .executeTakeFirst();
   return row?.is_premium ? false : true;
 }
 
@@ -144,13 +151,17 @@ type RecipeRow = {
 
 function shapeRow(row: RecipeRow, signedByPath: Map<string, string>) {
   const ingredients: Ingredient[] =
-    row.ingredients_json != null ? parseIngredients(row.ingredients_json) : parseIngredients(row.ingredients);
+    row.ingredients_json != null
+      ? parseIngredients(row.ingredients_json)
+      : parseIngredients(row.ingredients);
   const stepsRaw: Step[] =
-    row.instructions_json != null ? parseSteps(row.instructions_json) : parseSteps(row.instructions);
+    row.instructions_json != null
+      ? parseSteps(row.instructions_json)
+      : parseSteps(row.instructions);
   const instructions: Step[] = stepsRaw.map((s) => ({
     text: s.text,
     imagePath: s.imagePath ?? null,
-    imageUrl: s.imagePath ? signedByPath.get(s.imagePath) ?? null : null,
+    imageUrl: s.imagePath ? (signedByPath.get(s.imagePath) ?? null) : null,
   }));
   return {
     id: row.id,
@@ -162,7 +173,7 @@ function shapeRow(row: RecipeRow, signedByPath: Map<string, string>) {
     emoji: row.emoji ?? "🍽️",
     createdAt: new Date(row.created_at).getTime(),
     imagePath: row.image_url ?? null,
-    imageUrl: row.image_url ? signedByPath.get(row.image_url) ?? null : null,
+    imageUrl: row.image_url ? (signedByPath.get(row.image_url) ?? null) : null,
     isBakerMode: !!row.is_baker_mode,
     isDraft: !!row.is_draft,
     isPublic: row.is_public ?? true,
@@ -219,7 +230,9 @@ export const listRecipes = createServerFn({ method: "POST" })
 
     const hasMore = rows.length > limit;
     const trimmed = hasMore ? rows.slice(0, limit) : rows;
-    const nextCursor = hasMore ? new Date(trimmed[trimmed.length - 1].created_at).toISOString() : null;
+    const nextCursor = hasMore
+      ? new Date(trimmed[trimmed.length - 1].created_at).toISOString()
+      : null;
 
     // Listado: portadas con thumbnail (640×400 q70) e imágenes de pasos con
     // preset intermedio (800×800 q75). El original de 3-5 MB se reduce a
@@ -228,7 +241,8 @@ export const listRecipes = createServerFn({ method: "POST" })
     const stepPaths: string[] = [];
     for (const r of trimmed) {
       if (r.image_url) coverPaths.push(r.image_url);
-      const steps = r.instructions_json != null ? parseSteps(r.instructions_json) : parseSteps(r.instructions);
+      const steps =
+        r.instructions_json != null ? parseSteps(r.instructions_json) : parseSteps(r.instructions);
       for (const s of steps) if (s.imagePath) stepPaths.push(s.imagePath);
     }
     const [coverMap, stepMap] = await Promise.all([
@@ -280,7 +294,10 @@ export const updateRecipe = createServerFn({ method: "POST" })
       const { isAdmin } = await import("@/lib/auth/authorize.server");
       admin = await isAdmin(context.userId);
       if (!admin) throw new Error("APP-PERM-002: admin required");
-    } else if (typeof rest.isOfficialMelik === "boolean" || typeof rest.isPremiumOnly === "boolean") {
+    } else if (
+      typeof rest.isOfficialMelik === "boolean" ||
+      typeof rest.isPremiumOnly === "boolean"
+    ) {
       // Admin editing existing official recipe may need to *clear* a flag.
       const { isAdmin } = await import("@/lib/auth/authorize.server");
       admin = await isAdmin(context.userId);
@@ -315,14 +332,19 @@ export const deleteRecipe = createServerFn({ method: "POST" })
     const toRemove: string[] = [];
     if (row?.image_url) toRemove.push(row.image_url);
     if (row?.instructions_json) {
-      for (const s of parseSteps(row.instructions_json)) if (s.imagePath) toRemove.push(s.imagePath);
+      for (const s of parseSteps(row.instructions_json))
+        if (s.imagePath) toRemove.push(s.imagePath);
     }
     if (toRemove.length > 0) {
       const { deleteFile } = await import("@/lib/storage/local-storage.server");
       const own = toRemove.filter((p) => p.startsWith(`${context.userId}/`));
       await Promise.all(own.map((p) => deleteFile(IMAGE_BUCKET, p)));
     }
-    await db.deleteFrom("recipes").where("id", "=", data.id).where("user_id", "=", context.userId).execute();
+    await db
+      .deleteFrom("recipes")
+      .where("id", "=", data.id)
+      .where("user_id", "=", context.userId)
+      .execute();
     return { ok: true };
   });
 
@@ -354,7 +376,9 @@ const importRowSchema = z.object({
 
 export const importRecipes = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((input: unknown) => z.object({ recipes: z.array(importRowSchema).max(500) }).parse(input))
+  .inputValidator((input: unknown) =>
+    z.object({ recipes: z.array(importRowSchema).max(500) }).parse(input),
+  )
   .handler(async ({ data, context }) => {
     if (data.recipes.length === 0) return { inserted: 0, skipped: 0 };
     const { db, toJsonb } = await import("@/lib/db.server");
@@ -537,7 +561,8 @@ export const listDrafts = createServerFn({ method: "POST" })
     const paths: string[] = [];
     for (const r of rows) {
       if (r.image_url) paths.push(r.image_url);
-      const steps = r.instructions_json != null ? parseSteps(r.instructions_json) : parseSteps(r.instructions);
+      const steps =
+        r.instructions_json != null ? parseSteps(r.instructions_json) : parseSteps(r.instructions);
       for (const s of steps) if (s.imagePath) paths.push(s.imagePath);
     }
     const signedByPath = await signMany(paths);
@@ -550,7 +575,9 @@ const saveDraftInputSchema = recipeInputSchema.extend({
 
 export const saveDraft = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((input: z.infer<typeof saveDraftInputSchema>) => saveDraftInputSchema.parse(input))
+  .inputValidator((input: z.infer<typeof saveDraftInputSchema>) =>
+    saveDraftInputSchema.parse(input),
+  )
   .handler(async ({ data, context }) => {
     const { db } = await import("@/lib/db.server");
     const { id, ...rest } = data;
@@ -622,8 +649,11 @@ export const adminListOfficialRecipes = createServerFn({ method: "GET" })
 
     return rows.map((r) => {
       const ingredients =
-        r.ingredients_json != null ? parseIngredients(r.ingredients_json) : parseIngredients(r.ingredients);
-      const stepsRaw = r.instructions_json != null ? parseSteps(r.instructions_json) : parseSteps(r.instructions);
+        r.ingredients_json != null
+          ? parseIngredients(r.ingredients_json)
+          : parseIngredients(r.ingredients);
+      const stepsRaw =
+        r.instructions_json != null ? parseSteps(r.instructions_json) : parseSteps(r.instructions);
       return {
         id: r.id,
         title: r.title,
@@ -631,7 +661,7 @@ export const adminListOfficialRecipes = createServerFn({ method: "GET" })
         emoji: r.emoji ?? "🍽️",
         timeMinutes: r.time_minutes ?? 0,
         imagePath: r.image_url ?? null,
-        imageUrl: r.image_url ? signedByPath.get(r.image_url) ?? null : null,
+        imageUrl: r.image_url ? (signedByPath.get(r.image_url) ?? null) : null,
         isDraft: !!r.is_draft,
         isPremiumOnly: !!r.is_premium_only,
         createdAt: new Date(r.created_at).getTime(),
@@ -639,7 +669,7 @@ export const adminListOfficialRecipes = createServerFn({ method: "GET" })
         instructions: stepsRaw.map((s) => ({
           text: s.text,
           imagePath: s.imagePath ?? null,
-          imageUrl: s.imagePath ? signedByPath.get(s.imagePath) ?? null : null,
+          imageUrl: s.imagePath ? (signedByPath.get(s.imagePath) ?? null) : null,
         })),
       };
     });
@@ -690,7 +720,10 @@ export const adminCreateOfficialRecipe = createServerFn({ method: "POST" })
     const { assertAdmin } = await import("@/lib/auth/authorize.server");
     await assertAdmin(context.userId);
     const { db } = await import("@/lib/db.server");
-    const cols = rowToDbColumns({ ...data, isOfficialMelik: true, isPublic: false }, { admin: true });
+    const cols = rowToDbColumns(
+      { ...data, isOfficialMelik: true, isPublic: false },
+      { admin: true },
+    );
     const row = await db
       .insertInto("recipes")
       .values({ user_id: context.userId, ...cols })
@@ -711,6 +744,10 @@ export const adminDeleteOfficialRecipe = createServerFn({ method: "POST" })
     const { assertAdmin } = await import("@/lib/auth/authorize.server");
     await assertAdmin(context.userId);
     const { db } = await import("@/lib/db.server");
-    await db.deleteFrom("recipes").where("id", "=", data.id).where("is_official_melik", "=", true).execute();
+    await db
+      .deleteFrom("recipes")
+      .where("id", "=", data.id)
+      .where("is_official_melik", "=", true)
+      .execute();
     return { ok: true };
   });

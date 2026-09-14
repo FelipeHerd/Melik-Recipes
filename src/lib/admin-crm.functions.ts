@@ -37,7 +37,12 @@ async function audit(
   const { db, toJsonb } = await import("@/lib/db.server");
   await db
     .insertInto("admin_audit_log")
-    .values({ admin_id: adminId, action, target_user_id: targetUserId, metadata: toJsonb(metadata) })
+    .values({
+      admin_id: adminId,
+      action,
+      target_user_id: targetUserId,
+      metadata: toJsonb(metadata),
+    })
     .execute();
 }
 
@@ -218,7 +223,11 @@ export const grantTrial = createServerFn({ method: "POST" })
     const { db } = await import("@/lib/db.server");
 
     if (data.days === null) {
-      await db.updateTable("profiles").set({ premium_until: null }).where("id", "=", data.userId).execute();
+      await db
+        .updateTable("profiles")
+        .set({ premium_until: null })
+        .where("id", "=", data.userId)
+        .execute();
       await audit(context.userId, "trial_revoke", data.userId);
       return { premiumUntil: null };
     }
@@ -230,7 +239,9 @@ export const grantTrial = createServerFn({ method: "POST" })
       .where("id", "=", data.userId)
       .executeTakeFirst();
     const nowMs = Date.now();
-    const baseMs = current?.premium_until ? Math.max(nowMs, new Date(current.premium_until).getTime()) : nowMs;
+    const baseMs = current?.premium_until
+      ? Math.max(nowMs, new Date(current.premium_until).getTime())
+      : nowMs;
     const nextIso = new Date(baseMs + data.days * 86_400_000).toISOString();
 
     await db
@@ -240,7 +251,13 @@ export const grantTrial = createServerFn({ method: "POST" })
       .execute();
 
     const durationLabel =
-      data.days === 1 ? "1 día" : data.days < 30 ? `${data.days} días` : data.days === 30 ? "1 mes" : `${data.days} días`;
+      data.days === 1
+        ? "1 día"
+        : data.days < 30
+          ? `${data.days} días`
+          : data.days === 30
+            ? "1 mes"
+            : `${data.days} días`;
     await sendNotifInternal(
       data.userId,
       "🎁 Recibiste una prueba gratis de Melik+",
@@ -269,7 +286,11 @@ export const setUserRole = createServerFn({ method: "POST" })
     const { db } = await import("@/lib/db.server");
     const { sql } = await import("kysely");
 
-    const prev = await db.selectFrom("profiles").select(["role"]).where("id", "=", data.userId).executeTakeFirst();
+    const prev = await db
+      .selectFrom("profiles")
+      .select(["role"])
+      .where("id", "=", data.userId)
+      .executeTakeFirst();
     const prevRole = (prev?.role ?? "user") as Role;
 
     // Last-admin guard: no permitas degradar al último admin.
@@ -286,10 +307,17 @@ export const setUserRole = createServerFn({ method: "POST" })
 
     // Escritura dual + normalización a exactamente un rol en `user_roles`.
     await db.transaction().execute(async (trx) => {
-      await trx.updateTable("profiles").set({ role: data.role }).where("id", "=", data.userId).execute();
+      await trx
+        .updateTable("profiles")
+        .set({ role: data.role })
+        .where("id", "=", data.userId)
+        .execute();
       await trx.deleteFrom("user_roles").where("user_id", "=", data.userId).execute();
       if (data.role !== "user") {
-        await trx.insertInto("user_roles").values({ user_id: data.userId, role: data.role }).execute();
+        await trx
+          .insertInto("user_roles")
+          .values({ user_id: data.userId, role: data.role })
+          .execute();
       }
     });
 
@@ -322,10 +350,15 @@ const impersonateSchema = z.object({ userId: z.string().uuid() });
 export const generateImpersonationToken = createServerFn({ method: "POST" })
   .middleware([requireAuth])
   .inputValidator((input: unknown) => impersonateSchema.parse(input))
-  .handler(async ({ data, context }): Promise<{ token: string; email: string; userId: string; exp: number }> => {
-    await assertAdmin(context.userId); // solo admin.
-    const { generateImpersonationToken: issue } = await import("@/lib/auth/admin-users.server");
-    const { token, email } = await issue(data.userId, context.userId);
-    await audit(context.userId, "impersonate", data.userId, { email });
-    return { token, email, userId: data.userId, exp: Math.floor(Date.now() / 1000) + 5 * 60 };
-  });
+  .handler(
+    async ({
+      data,
+      context,
+    }): Promise<{ token: string; email: string; userId: string; exp: number }> => {
+      await assertAdmin(context.userId); // solo admin.
+      const { generateImpersonationToken: issue } = await import("@/lib/auth/admin-users.server");
+      const { token, email } = await issue(data.userId, context.userId);
+      await audit(context.userId, "impersonate", data.userId, { email });
+      return { token, email, userId: data.userId, exp: Math.floor(Date.now() / 1000) + 5 * 60 };
+    },
+  );

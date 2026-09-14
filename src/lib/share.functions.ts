@@ -48,7 +48,11 @@ export const generateShareToken = createServerFn({ method: "POST" })
     if (row.share_token) return { token: row.share_token };
 
     const token = crypto.randomUUID();
-    await db.updateTable("recipes").set({ share_token: token }).where("id", "=", data.recipeId).execute();
+    await db
+      .updateTable("recipes")
+      .set({ share_token: token })
+      .where("id", "=", data.recipeId)
+      .execute();
     return { token };
   });
 
@@ -84,14 +88,22 @@ export const getSharedRecipe = createServerFn({ method: "POST" })
 
     let originalAuthor: string | null = row.original_author ?? null;
     if (!originalAuthor) {
-      const profile = await db.selectFrom("profiles").select(["username"]).where("id", "=", row.user_id).executeTakeFirst();
+      const profile = await db
+        .selectFrom("profiles")
+        .select(["username"])
+        .where("id", "=", row.user_id)
+        .executeTakeFirst();
       originalAuthor = profile?.username ?? null;
     }
 
     const ingredients: Ingredient[] =
-      row.ingredients_json != null ? parseIngredients(row.ingredients_json) : parseIngredients(row.ingredients);
+      row.ingredients_json != null
+        ? parseIngredients(row.ingredients_json)
+        : parseIngredients(row.ingredients);
     const steps: Step[] =
-      row.instructions_json != null ? parseSteps(row.instructions_json) : parseSteps(row.instructions);
+      row.instructions_json != null
+        ? parseSteps(row.instructions_json)
+        : parseSteps(row.instructions);
 
     const paths: string[] = [];
     if (row.image_url) paths.push(row.image_url);
@@ -109,12 +121,12 @@ export const getSharedRecipe = createServerFn({ method: "POST" })
       emoji: row.emoji ?? "🍽️",
       timeMinutes: row.time_minutes ?? 0,
       notes: row.notes ?? "",
-      imageUrl: row.image_url ? signedByPath.get(row.image_url) ?? null : null,
+      imageUrl: row.image_url ? (signedByPath.get(row.image_url) ?? null) : null,
       ingredients,
       instructions: steps.map((s) => ({
         text: s.text,
         imagePath: null,
-        imageUrl: s.imagePath ? signedByPath.get(s.imagePath) ?? null : null,
+        imageUrl: s.imagePath ? (signedByPath.get(s.imagePath) ?? null) : null,
       })),
       isBakerMode: !!row.is_baker_mode,
       originalAuthor,
@@ -159,14 +171,22 @@ export const saveSharedRecipe = createServerFn({ method: "POST" })
 
     let originalAuthor: string | null = row.original_author ?? null;
     if (!originalAuthor) {
-      const profile = await db.selectFrom("profiles").select(["username"]).where("id", "=", row.user_id).executeTakeFirst();
+      const profile = await db
+        .selectFrom("profiles")
+        .select(["username"])
+        .where("id", "=", row.user_id)
+        .executeTakeFirst();
       originalAuthor = profile?.username ?? null;
     }
 
     const ingredients =
-      row.ingredients_json != null ? parseIngredients(row.ingredients_json) : parseIngredients(row.ingredients);
+      row.ingredients_json != null
+        ? parseIngredients(row.ingredients_json)
+        : parseIngredients(row.ingredients);
     const sourceSteps: Step[] =
-      row.instructions_json != null ? parseSteps(row.instructions_json) : parseSteps(row.instructions);
+      row.instructions_json != null
+        ? parseSteps(row.instructions_json)
+        : parseSteps(row.instructions);
 
     // Copy image files into the new owner's folder so their signed URLs work.
     async function copyImage(srcPath: string | null | undefined): Promise<string | null> {

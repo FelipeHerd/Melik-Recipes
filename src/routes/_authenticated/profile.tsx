@@ -3,7 +3,17 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { errorText, showError } from "@/lib/errors/toast";
-import { Crown, Download, KeyRound, LogOut, Shield, Trash2, Upload, X, CreditCard } from "lucide-react";
+import {
+  Crown,
+  Download,
+  KeyRound,
+  LogOut,
+  Shield,
+  Trash2,
+  Upload,
+  X,
+  CreditCard,
+} from "lucide-react";
 import { useIsAdmin } from "@/lib/use-admin";
 import { changePassword } from "@/lib/auth/auth.functions";
 import { clearSession, getSession, useSessionUser } from "@/lib/auth/session-store";
@@ -35,7 +45,10 @@ export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
     meta: [
       { title: "Mi perfil — Melik Recipes" },
-      { name: "description", content: "Gestiona tu cuenta, tus preferencias y tu privacidad en Melik Recipes." },
+      {
+        name: "description",
+        content: "Gestiona tu cuenta, tus preferencias y tu privacidad en Melik Recipes.",
+      },
       { property: "og:title", content: "Mi perfil — Melik Recipes" },
       { property: "og:url", content: "https://melik-recipes.lovable.app/profile" },
       { name: "robots", content: "noindex" },
@@ -68,7 +81,8 @@ function ProfilePage() {
     return "ME";
   })();
 
-  const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || "Mi cuenta";
+  const fullName =
+    [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || "Mi cuenta";
 
   async function handleSignOut() {
     await queryClient.cancelQueries();
@@ -141,7 +155,9 @@ function ProfilePage() {
         return;
       }
       if (parsed.length > 500) {
-        toast.error("Máximo 500 recetas por importación", { description: "Divide tu archivo en partes más pequeñas." });
+        toast.error("Máximo 500 recetas por importación", {
+          description: "Divide tu archivo en partes más pequeñas.",
+        });
         return;
       }
       const result = await importRecipes({ data: { recipes: parsed } });
@@ -172,7 +188,9 @@ function ProfilePage() {
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium uppercase tracking-wider text-[color:var(--ochre)]">Mi perfil</p>
+          <p className="text-sm font-medium uppercase tracking-wider text-[color:var(--ochre)]">
+            Mi perfil
+          </p>
           <div className="flex flex-col gap-1 md:flex-row md:items-baseline md:gap-3">
             <h1 className="truncate font-display text-3xl font-semibold">{fullName}</h1>
             {profile?.username && (
@@ -187,15 +205,17 @@ function ProfilePage() {
 
       {profile && profile.username === null && <ClaimUsernameSection />}
 
-
-
       <section className="mt-8 grid gap-4 sm:grid-cols-2">
         <div className="rounded-3xl border border-border/60 bg-card p-5">
-          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Recetas guardadas</p>
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Recetas guardadas
+          </p>
           <p className="mt-2 font-display text-4xl font-semibold">{recipes.length}</p>
         </div>
         <div className="rounded-3xl border border-border/60 bg-card p-5">
-          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Respaldo</p>
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Respaldo
+          </p>
           <p className="mt-2 text-sm text-muted-foreground">
             Exporta o restaura tus recetas usando un archivo CSV.
           </p>
@@ -229,7 +249,6 @@ function ProfilePage() {
       <PremiumDevSection isPremium={!!profile?.is_premium} />
 
       <section className="mt-8 grid gap-3">
-
         <button
           onClick={() => setPwOpen(true)}
           className="flex items-center justify-between rounded-2xl border border-border bg-card px-5 py-4 text-left text-sm font-medium hover:bg-card/70"
@@ -263,8 +282,8 @@ function ProfilePage() {
             <AlertDialogHeader>
               <AlertDialogTitle>¿Eliminar tu cuenta permanentemente?</AlertDialogTitle>
               <AlertDialogDescription>
-                Esta acción es <strong>irreversible</strong>. Se borrarán tu perfil, todas tus recetas y tu sesión.
-                No podremos recuperar ningún dato después.
+                Esta acción es <strong>irreversible</strong>. Se borrarán tu perfil, todas tus
+                recetas y tu sesión. No podremos recuperar ningún dato después.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -412,7 +431,8 @@ function ClaimUsernameSection() {
         ✨ Agrega tu nombre de usuario para activar las funciones sociales de Melik
       </p>
       <p className="mt-1 text-xs text-muted-foreground">
-        ⚠️ Elígelo con cuidado: será tu identidad única y <strong>no podrá modificarse</strong> después.
+        ⚠️ Elígelo con cuidado: será tu identidad única y <strong>no podrá modificarse</strong>{" "}
+        después.
       </p>
       <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-start">
         <UsernameField value={value} onChange={setValue} onStatusChange={setStatus} />
@@ -461,11 +481,16 @@ type SubState =
   | { kind: "trial"; until: string }
   | { kind: "free" };
 
-function deriveSubscriptionState(profile: {
-  is_premium?: boolean | null;
-  premium_until?: string | null;
-  subscription_status?: string | null;
-} | null | undefined): SubState {
+function deriveSubscriptionState(
+  profile:
+    | {
+        is_premium?: boolean | null;
+        premium_until?: string | null;
+        subscription_status?: string | null;
+      }
+    | null
+    | undefined,
+): SubState {
   if (!profile) return { kind: "free" };
   const isPremium = profile.is_premium === true;
   const until = profile.premium_until ?? null;
@@ -629,8 +654,6 @@ function SubscriptionSection() {
 
       <BakeryProgressPanel />
 
-
-
       <AlertDialog open={retentionOpen} onOpenChange={(o) => !busy && setRetentionOpen(o)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -713,13 +736,12 @@ function BakeryProgressPanel() {
           ? "Canjéalos por recetas oficiales en Melik Bakery."
           : `Faltan ${monthsToNextUnlock} ${
               monthsToNextUnlock === 1 ? "mes" : "meses"
-            } para tu próximo desbloqueo.`}
-        {" "}Reclamados: {unlocksClaimed} · Total ganados: {unlocksEarned}.
+            } para tu próximo desbloqueo.`}{" "}
+        Reclamados: {unlocksClaimed} · Total ganados: {unlocksEarned}.
       </p>
     </section>
   );
 }
-
 
 // Admin panel access — SOLO visible para role === "admin".
 // Ni `dev` ni `user` deben ver este botón bajo ninguna circunstancia.
@@ -755,8 +777,6 @@ function AdminSection() {
   );
 }
 
-
-
 function ChangePasswordModal({ onClose }: { onClose: () => void }) {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -789,14 +809,21 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/40 p-0 backdrop-blur-sm animate-fade-in sm:items-center sm:p-6" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/40 p-0 backdrop-blur-sm animate-fade-in sm:items-center sm:p-6"
+      onClick={onClose}
+    >
       <div
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         className="relative w-full max-w-md rounded-t-3xl bg-background p-6 shadow-2xl animate-enter sm:rounded-3xl sm:p-8"
       >
-        <button onClick={onClose} aria-label="Cerrar" className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-xl text-foreground/60 hover:bg-card">
+        <button
+          onClick={onClose}
+          aria-label="Cerrar"
+          className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-xl text-foreground/60 hover:bg-card"
+        >
           <X className="h-5 w-5" />
         </button>
         <h2 className="font-display text-2xl font-semibold">Cambiar contraseña</h2>
@@ -824,7 +851,11 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
               className="h-11 w-full rounded-xl border border-border bg-card px-4 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </label>
-          {error && <p className="rounded-xl bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</p>}
+          {error && (
+            <p className="rounded-xl bg-destructive/10 px-3 py-2 text-xs text-destructive">
+              {error}
+            </p>
+          )}
           <button
             type="submit"
             disabled={loading}

@@ -63,7 +63,9 @@ export function PaywallModal({
             Receta exclusiva Melik+
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            {recipeTitle ? <>«{recipeTitle}» es</> : "Esta receta es"} parte del catálogo premium de la Melik Bakery. Suscríbete para desbloquear todas las recetas oficiales, pasos ilustrados y actualizaciones semanales.
+            {recipeTitle ? <>«{recipeTitle}» es</> : "Esta receta es"} parte del catálogo premium de
+            la Melik Bakery. Suscríbete para desbloquear todas las recetas oficiales, pasos
+            ilustrados y actualizaciones semanales.
           </p>
 
           <ul className="mt-5 space-y-2 text-left text-sm text-foreground/80">

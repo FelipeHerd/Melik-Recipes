@@ -20,11 +20,19 @@ export async function listUsersPage(page: number, perPage: number): Promise<Admi
 /** Full scan, for admin-metrics.functions.ts's "all users" report. This app's
  *  user count doesn't warrant Supabase's old 200-per-page pagination loop. */
 export async function listAllUsers(): Promise<AdminUserRecord[]> {
-  return db.selectFrom("users").select(["id", "email", "created_at"]).orderBy("created_at", "asc").execute();
+  return db
+    .selectFrom("users")
+    .select(["id", "email", "created_at"])
+    .orderBy("created_at", "asc")
+    .execute();
 }
 
 export async function getUserById(id: string): Promise<AdminUserRecord | undefined> {
-  return db.selectFrom("users").select(["id", "email", "created_at"]).where("id", "=", id).executeTakeFirst();
+  return db
+    .selectFrom("users")
+    .select(["id", "email", "created_at"])
+    .where("id", "=", id)
+    .executeTakeFirst();
 }
 
 export async function searchUsersByEmail(needle: string, limit = 25): Promise<AdminUserRecord[]> {

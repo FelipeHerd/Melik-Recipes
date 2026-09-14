@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, type QueryClient } from "@tanstack/react-query";
 import { BarChart3, Download } from "lucide-react";
 import { toast } from "sonner";
 import { LivePresenceCard } from "@/components/admin/LivePresenceCard";
@@ -13,17 +13,13 @@ import { assertAdminOrRedirect } from "@/lib/admin-guard";
 
 export const Route = createFileRoute("/admin/")({
   beforeLoad: async ({ context }) => {
-    await assertAdminOrRedirect((context as { queryClient?: any })?.queryClient);
+    await assertAdminOrRedirect((context as { queryClient?: QueryClient })?.queryClient);
   },
   head: () => ({
-    meta: [
-      { title: "Métricas — Panel Melik" },
-      { name: "robots", content: "noindex,nofollow" },
-    ],
+    meta: [{ title: "Métricas — Panel Melik" }, { name: "robots", content: "noindex,nofollow" }],
   }),
   component: AdminMetrics,
 });
-
 
 function neutralize(s: string): string {
   return /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
@@ -122,9 +118,7 @@ function AdminMetrics() {
         <ErrorReportsInbox />
       </div>
 
-      {isPending && (
-        <p className="mt-6 text-center text-xs text-zinc-500">Cargando métricas…</p>
-      )}
+      {isPending && <p className="mt-6 text-center text-xs text-zinc-500">Cargando métricas…</p>}
     </div>
   );
 }

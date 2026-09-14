@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, type QueryClient } from "@tanstack/react-query";
 import { Users } from "lucide-react";
 import { UserSearchInput } from "@/components/admin/UserSearchInput";
 import { UserResultsTable } from "@/components/admin/UserResultsTable";
@@ -11,17 +11,13 @@ import { assertAdminOrRedirect } from "@/lib/admin-guard";
 
 export const Route = createFileRoute("/admin/usuarios")({
   beforeLoad: async ({ context }) => {
-    await assertAdminOrRedirect((context as { queryClient?: any })?.queryClient);
+    await assertAdminOrRedirect((context as { queryClient?: QueryClient })?.queryClient);
   },
   head: () => ({
-    meta: [
-      { title: "Usuarios — Panel Melik" },
-      { name: "robots", content: "noindex,nofollow" },
-    ],
+    meta: [{ title: "Usuarios — Panel Melik" }, { name: "robots", content: "noindex,nofollow" }],
   }),
   component: AdminUsers,
 });
-
 
 function AdminUsers() {
   const [query, setQuery] = useState("");
@@ -41,9 +37,7 @@ function AdminUsers() {
           <Users className="h-5 w-5" />
         </span>
         <div>
-          <p className="text-xs font-medium uppercase tracking-[0.2em] text-zinc-500">
-            CRM
-          </p>
+          <p className="text-xs font-medium uppercase tracking-[0.2em] text-zinc-500">CRM</p>
           <h1 className="font-display text-2xl font-semibold">Usuarios</h1>
         </div>
       </div>

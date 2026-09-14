@@ -15,8 +15,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+// eslint-disable-next-line react-refresh/only-export-components -- re-exported for the many callers that import it from here
 export { useSessionUser };
 
+// eslint-disable-next-line react-refresh/only-export-components -- shared helper colocated with the component that uses it
 export function initialsOf(first?: string | null, last?: string | null, email?: string | null) {
   const f = (first ?? "").trim();
   const l = (last ?? "").trim();
@@ -63,9 +65,9 @@ export function UserMenu({ compact = false }: { compact?: boolean } = {}) {
     );
   }
 
-
   const initials = initialsOf(profile?.first_name, profile?.last_name);
-  const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || "Mi cuenta";
+  const fullName =
+    [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || "Mi cuenta";
   const username = profile?.username ?? null;
 
   async function handleSignOut() {
@@ -85,7 +87,13 @@ export function UserMenu({ compact = false }: { compact?: boolean } = {}) {
           aria-label="Menú de cuenta"
         >
           {profile?.avatar_url ? (
-            <img src={profile.avatar_url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+            <img
+              src={profile.avatar_url}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover"
+            />
           ) : (
             <span>{initials}</span>
           )}
@@ -109,7 +117,10 @@ export function UserMenu({ compact = false }: { compact?: boolean } = {}) {
             <Crown className="h-4 w-4 text-[color:var(--ochre)]" /> Suscripción Melik+
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
+        <DropdownMenuItem
+          onClick={handleSignOut}
+          className="text-destructive focus:text-destructive"
+        >
           <LogOut className="h-4 w-4" /> Cerrar sesión
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -147,7 +158,8 @@ export function SidebarUsername({ collapsed }: { collapsed: boolean }) {
     staleTime: 60_000,
   });
   if (!ready || !userId) return null;
-  const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || "Mi cuenta";
+  const fullName =
+    [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || "Mi cuenta";
   const username = profile?.username ?? null;
   return (
     <div
@@ -157,9 +169,7 @@ export function SidebarUsername({ collapsed }: { collapsed: boolean }) {
       }`}
     >
       <p className="truncate text-sm font-medium text-foreground">{fullName}</p>
-      {username && (
-        <p className="truncate text-xs text-muted-foreground">@{username}</p>
-      )}
+      {username && <p className="truncate text-xs text-muted-foreground">@{username}</p>}
     </div>
   );
 }

@@ -27,11 +27,21 @@ async function assertAdmin(userId: string) {
   }
 }
 
-async function audit(adminId: string, action: string, targetUserId: string | null, metadata: Record<string, unknown> = {}) {
+async function audit(
+  adminId: string,
+  action: string,
+  targetUserId: string | null,
+  metadata: Record<string, unknown> = {},
+) {
   const { db, toJsonb } = await import("@/lib/db.server");
   await db
     .insertInto("admin_audit_log")
-    .values({ admin_id: adminId, action, target_user_id: targetUserId, metadata: toJsonb(metadata) })
+    .values({
+      admin_id: adminId,
+      action,
+      target_user_id: targetUserId,
+      metadata: toJsonb(metadata),
+    })
     .execute();
 }
 
@@ -67,57 +77,69 @@ export const getAdminStatsV2 = createServerFn({ method: "GET" })
     const count = (qb: { executeTakeFirstOrThrow: () => Promise<{ count: number }> }) =>
       qb.executeTakeFirstOrThrow().then((r) => Number(r.count));
 
-    const [totalUsers, premiumActive, premiumTrials, totalRecipes, officialRecipes, kikoThisMonth, topRows] =
-      await Promise.all([
-        count(db.selectFrom("profiles").select(sql<number>`count(*)`.as("count"))),
-        count(
-          db
-            .selectFrom("profiles")
-            .select(sql<number>`count(*)`.as("count"))
-            .where((eb) => eb.or([eb("is_premium", "=", true), eb("premium_until", ">", now)])),
-        ),
-        count(
-          db
-            .selectFrom("profiles")
-            .select(sql<number>`count(*)`.as("count"))
-            .where("is_premium", "=", false)
-            .where("premium_until", ">", now),
-        ),
-        count(
-          db
-            .selectFrom("recipes")
-            .select(sql<number>`count(*)`.as("count"))
-            .where("is_official_melik", "=", false),
-        ),
-        count(
-          db
-            .selectFrom("recipes")
-            .select(sql<number>`count(*)`.as("count"))
-            .where("is_official_melik", "=", true),
-        ),
-        count(
-          db
-            .selectFrom("ai_usage")
-            .select(sql<number>`count(*)`.as("count"))
-            .where("created_at", ">=", monthStart),
-        ),
-        // Replaces the old admin_top_kiko_users() SQL RPC with a plain query.
+    const [
+      totalUsers,
+      premiumActive,
+      premiumTrials,
+      totalRecipes,
+      officialRecipes,
+      kikoThisMonth,
+      topRows,
+    ] = await Promise.all([
+      count(db.selectFrom("profiles").select(sql<number>`count(*)`.as("count"))),
+      count(
+        db
+          .selectFrom("profiles")
+          .select(sql<number>`count(*)`.as("count"))
+          .where((eb) => eb.or([eb("is_premium", "=", true), eb("premium_until", ">", now)])),
+      ),
+      count(
+        db
+          .selectFrom("profiles")
+          .select(sql<number>`count(*)`.as("count"))
+          .where("is_premium", "=", false)
+          .where("premium_until", ">", now),
+      ),
+      count(
+        db
+          .selectFrom("recipes")
+          .select(sql<number>`count(*)`.as("count"))
+          .where("is_official_melik", "=", false),
+      ),
+      count(
+        db
+          .selectFrom("recipes")
+          .select(sql<number>`count(*)`.as("count"))
+          .where("is_official_melik", "=", true),
+      ),
+      count(
         db
           .selectFrom("ai_usage")
-          .innerJoin("profiles", "profiles.id", "ai_usage.user_id")
-          .select([
-            "ai_usage.user_id",
-            "profiles.username",
-            "profiles.first_name",
-            "profiles.avatar_url",
-            sql<number>`count(*)`.as("request_count"),
-          ])
-          .where("ai_usage.created_at", ">=", monthStart)
-          .groupBy(["ai_usage.user_id", "profiles.username", "profiles.first_name", "profiles.avatar_url"])
-          .orderBy(sql`count(*)`, "desc")
-          .limit(5)
-          .execute(),
-      ]);
+          .select(sql<number>`count(*)`.as("count"))
+          .where("created_at", ">=", monthStart),
+      ),
+      // Replaces the old admin_top_kiko_users() SQL RPC with a plain query.
+      db
+        .selectFrom("ai_usage")
+        .innerJoin("profiles", "profiles.id", "ai_usage.user_id")
+        .select([
+          "ai_usage.user_id",
+          "profiles.username",
+          "profiles.first_name",
+          "profiles.avatar_url",
+          sql<number>`count(*)`.as("request_count"),
+        ])
+        .where("ai_usage.created_at", ">=", monthStart)
+        .groupBy([
+          "ai_usage.user_id",
+          "profiles.username",
+          "profiles.first_name",
+          "profiles.avatar_url",
+        ])
+        .orderBy(sql`count(*)`, "desc")
+        .limit(5)
+        .execute(),
+    ]);
 
     return {
       totalUsers,
@@ -168,7 +190,11 @@ export const listOpenErrorReports = createServerFn({ method: "GET" })
     const profileMap = new Map<string, { username: string | null }>();
     const emailMap = new Map<string, string | null>();
     if (ids.length) {
-      const profs = await db.selectFrom("profiles").select(["id", "username"]).where("id", "in", ids).execute();
+      const profs = await db
+        .selectFrom("profiles")
+        .select(["id", "username"])
+        .where("id", "in", ids)
+        .execute();
       profs.forEach((p) => profileMap.set(p.id, { username: p.username }));
       const results = await Promise.all(ids.map((id) => getUserById(id)));
       results.forEach((res, i) => emailMap.set(ids[i], res?.email ?? null));
@@ -180,8 +206,8 @@ export const listOpenErrorReports = createServerFn({ method: "GET" })
       route: r.route,
       createdAt: isoOrNull(r.created_at) as string,
       userId: r.user_id,
-      username: r.user_id ? profileMap.get(r.user_id)?.username ?? null : null,
-      email: r.user_id ? emailMap.get(r.user_id) ?? null : null,
+      username: r.user_id ? (profileMap.get(r.user_id)?.username ?? null) : null,
+      email: r.user_id ? (emailMap.get(r.user_id) ?? null) : null,
     }));
   });
 
@@ -193,7 +219,11 @@ export const resolveErrorReport = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<{ ok: true }> => {
     await assertAdmin(context.userId);
     const { db } = await import("@/lib/db.server");
-    await db.updateTable("error_reports").set({ status: "resolved" }).where("id", "=", data.id).execute();
+    await db
+      .updateTable("error_reports")
+      .set({ status: "resolved" })
+      .where("id", "=", data.id)
+      .execute();
     await audit(context.userId, "resolve_error", null, { report_id: data.id });
     return { ok: true };
   });
@@ -219,7 +249,10 @@ export const exportLeadsCsv = createServerFn({ method: "GET" })
     const all = await listAllUsers();
 
     // Join con profiles para username, is_premium, premium_until (en lotes de 500).
-    const profileMap = new Map<string, { username: string | null; is_premium: boolean; premium_until: Date | null }>();
+    const profileMap = new Map<
+      string,
+      { username: string | null; is_premium: boolean; premium_until: Date | null }
+    >();
     const ids = all.map((u) => u.id);
     for (let i = 0; i < ids.length; i += 500) {
       const chunk = ids.slice(i, i + 500);
@@ -229,7 +262,11 @@ export const exportLeadsCsv = createServerFn({ method: "GET" })
         .where("id", "in", chunk)
         .execute();
       profs.forEach((p) =>
-        profileMap.set(p.id, { username: p.username, is_premium: !!p.is_premium, premium_until: p.premium_until }),
+        profileMap.set(p.id, {
+          username: p.username,
+          is_premium: !!p.is_premium,
+          premium_until: p.premium_until,
+        }),
       );
     }
 

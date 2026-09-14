@@ -1,7 +1,20 @@
 import { useEffect, useMemo, useRef, useState, lazy, Suspense } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "@tanstack/react-router";
-import { BookOpen, Clock, Pencil, Sparkles, X, RefreshCw, Lock, Check, Share2, Plus, Loader2, Calculator } from "lucide-react";
+import {
+  BookOpen,
+  Clock,
+  Pencil,
+  Sparkles,
+  X,
+  RefreshCw,
+  Lock,
+  Check,
+  Share2,
+  Plus,
+  Loader2,
+  Calculator,
+} from "lucide-react";
 const ShareRecipeModal = lazy(() =>
   import("@/components/ShareRecipeModal").then((m) => ({ default: m.ShareRecipeModal })),
 );
@@ -75,7 +88,6 @@ export function ViewRecipeModal({
     onClaim?: () => void;
     claiming?: boolean;
   };
-
 }) {
   const { isAuthenticated } = useProfile();
   const [checkedIng, setCheckedIng] = useState<Set<number>>(new Set());
@@ -111,12 +123,12 @@ export function ViewRecipeModal({
     setBakerModeToggle(
       isBakingCategory(recipe.category) &&
         (recipe.isBakerMode === true ||
-          (recipe.isBakerMode === undefined && recipe.ingredients.some((i) => (i.unit ?? "").trim() === "%"))),
+          (recipe.isBakerMode === undefined &&
+            recipe.ingredients.some((i) => (i.unit ?? "").trim() === "%"))),
     );
   }, [recipe.id, recipe.category, recipe.isBakerMode, recipe.ingredients]);
 
   const bakerMode = categoryIsBaking && bakerModeToggle;
-
 
   if (typeof document === "undefined") return null;
 
@@ -174,13 +186,18 @@ export function ViewRecipeModal({
           </div>
           <div className="relative mt-14 flex flex-col gap-3 sm:mt-2 sm:flex-row sm:items-center sm:gap-4">
             {!(isCustomCategory(recipe.category) && !showCoverImage) && (
-              <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-background/70 text-3xl backdrop-blur sm:h-16 sm:w-16 sm:text-4xl" aria-hidden>
+              <span
+                className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-background/70 text-3xl backdrop-blur sm:h-16 sm:w-16 sm:text-4xl"
+                aria-hidden
+              >
                 {recipe.emoji}
               </span>
             )}
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <p className="text-xs font-medium uppercase tracking-wider text-[color:var(--ochre)]">{recipe.category}</p>
+                <p className="text-xs font-medium uppercase tracking-wider text-[color:var(--ochre)]">
+                  {recipe.category}
+                </p>
                 {officialBadge && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
                     Oficial Melik
@@ -192,24 +209,26 @@ export function ViewRecipeModal({
                   </span>
                 )}
               </div>
-              <h2 id="view-recipe-title" className="font-display text-2xl font-semibold leading-tight line-clamp-2 sm:text-3xl">
+              <h2
+                id="view-recipe-title"
+                className="font-display text-2xl font-semibold leading-tight line-clamp-2 sm:text-3xl"
+              >
                 {recipe.title}
               </h2>
               {recipe.originalAuthor &&
                 (!currentUsername ||
                   recipe.originalAuthor.toLowerCase() !== currentUsername.toLowerCase()) && (
-                <p className="mt-1 text-sm italic text-muted-foreground truncate">
-                  Receta de <span className="font-medium not-italic">@{recipe.originalAuthor}</span>
-                </p>
-              )}
+                  <p className="mt-1 text-sm italic text-muted-foreground truncate">
+                    Receta de{" "}
+                    <span className="font-medium not-italic">@{recipe.originalAuthor}</span>
+                  </p>
+                )}
               <p className="mt-1 inline-flex items-center gap-1.5 text-sm text-muted-foreground">
                 <Clock className="h-4 w-4" /> {recipe.timeMinutes} min
               </p>
             </div>
           </div>
         </div>
-
-
 
         <div className="relative flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-10">
           {isLocked && (
@@ -283,7 +302,9 @@ export function ViewRecipeModal({
                           >
                             {checked && <Check className="h-3.5 w-3.5" />}
                           </span>
-                          <span className={checked ? "text-muted-foreground line-through" : ""}>{text}</span>
+                          <span className={checked ? "text-muted-foreground line-through" : ""}>
+                            {text}
+                          </span>
                         </button>
                       </li>
                     );
@@ -312,12 +333,19 @@ export function ViewRecipeModal({
                             <span
                               className={
                                 "grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-semibold " +
-                                (done ? "bg-primary text-primary-foreground" : "bg-background text-foreground/70 ring-1 ring-border")
+                                (done
+                                  ? "bg-primary text-primary-foreground"
+                                  : "bg-background text-foreground/70 ring-1 ring-border")
                               }
                             >
                               {done ? <Check className="h-3.5 w-3.5" /> : i + 1}
                             </span>
-                            <p className={"text-sm leading-relaxed " + (done ? "text-muted-foreground line-through" : "")}>
+                            <p
+                              className={
+                                "text-sm leading-relaxed " +
+                                (done ? "text-muted-foreground line-through" : "")
+                              }
+                            >
                               {step.text}
                             </p>
                           </button>
@@ -360,32 +388,34 @@ export function ViewRecipeModal({
             <div className="flex items-center justify-between gap-2">
               {ownershipNotice ? (
                 <span className="text-sm italic text-muted-foreground">{ownershipNotice}</span>
-              ) : <span />}
+              ) : (
+                <span />
+              )}
               <div className="flex items-center justify-end gap-2">
-              {onSaveToLibrary && (
-                <button
-                  type="button"
-                  onClick={onSaveToLibrary}
-                  disabled={savingToLibrary}
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-                >
-                  {savingToLibrary ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Plus className="h-4 w-4" />
-                  )}
-                  Guardar en mi recetario
-                </button>
-              )}
-              {!readOnly && (
-                <Link
-                  to="/chef"
-                  search={{ recipeId: recipe.id } as never}
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-border bg-[#deccb8] px-5 text-sm font-medium text-foreground hover:bg-[#d4c0ac]"
-                >
-                  <Sparkles className="h-4 w-4" /> Cocinar con Kiko
-                </Link>
-              )}
+                {onSaveToLibrary && (
+                  <button
+                    type="button"
+                    onClick={onSaveToLibrary}
+                    disabled={savingToLibrary}
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                  >
+                    {savingToLibrary ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Plus className="h-4 w-4" />
+                    )}
+                    Guardar en mi recetario
+                  </button>
+                )}
+                {!readOnly && (
+                  <Link
+                    to="/chef"
+                    search={{ recipeId: recipe.id } as never}
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-border bg-[#deccb8] px-5 text-sm font-medium text-foreground hover:bg-[#d4c0ac]"
+                  >
+                    <Sparkles className="h-4 w-4" /> Cocinar con Kiko
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -447,10 +477,7 @@ function BakerCalculator({ recipe }: { recipe: ViewableRecipe }) {
     () => recipe.ingredients.map((ing) => parsePercent(ing.quantity)),
     [recipe.ingredients],
   );
-  const pTotal = useMemo(
-    () => percents.reduce<number>((acc, p) => acc + (p ?? 0), 0),
-    [percents],
-  );
+  const pTotal = useMemo(() => percents.reduce<number>((acc, p) => acc + (p ?? 0), 0), [percents]);
 
   const [totalWeight, setTotalWeight] = useState<number>(
     () => loadBakerTotal(recipe.id) ?? DEFAULT_TOTAL_WEIGHT,
@@ -462,7 +489,9 @@ function BakerCalculator({ recipe }: { recipe: ViewableRecipe }) {
     percents.map((p) =>
       p == null || pTotal <= 0
         ? ""
-        : formatScaledQty(gramsFromPercent(p, loadBakerTotal(recipe.id) ?? DEFAULT_TOTAL_WEIGHT, pTotal)),
+        : formatScaledQty(
+            gramsFromPercent(p, loadBakerTotal(recipe.id) ?? DEFAULT_TOTAL_WEIGHT, pTotal),
+          ),
     ),
   );
   const focusedRef = useRef<{ kind: "total" | "gram"; index?: number } | null>(null);
@@ -548,7 +577,9 @@ function BakerCalculator({ recipe }: { recipe: ViewableRecipe }) {
           min={0}
           step="any"
           value={totalInput}
-          onFocus={() => { focusedRef.current = { kind: "total" }; }}
+          onFocus={() => {
+            focusedRef.current = { kind: "total" };
+          }}
           onChange={(e) => onTotalChange(e.target.value)}
           onBlur={onTotalBlur}
           disabled={noFormula}
@@ -572,10 +603,7 @@ function BakerCalculator({ recipe }: { recipe: ViewableRecipe }) {
             const pct = percents[i];
             const editable = pct != null && pTotal > 0;
             return (
-              <li
-                key={i}
-                className="grid grid-cols-[1fr_4rem_6rem] items-center gap-2 px-3 py-2"
-              >
+              <li key={i} className="grid grid-cols-[1fr_4rem_6rem] items-center gap-2 px-3 py-2">
                 <span className="min-w-0 truncate text-sm">{ing.name || "—"}</span>
                 <span className="text-right text-sm font-semibold tabular-nums text-primary">
                   {pct != null ? `${formatScaledQty(pct)}%` : "—"}
@@ -586,8 +614,10 @@ function BakerCalculator({ recipe }: { recipe: ViewableRecipe }) {
                     inputMode="decimal"
                     min={0}
                     step="any"
-                    value={editable ? gramInputs[i] ?? "" : ""}
-                    onFocus={() => { focusedRef.current = { kind: "gram", index: i }; }}
+                    value={editable ? (gramInputs[i] ?? "") : ""}
+                    onFocus={() => {
+                      focusedRef.current = { kind: "gram", index: i };
+                    }}
                     onChange={(e) => onGramChange(i, e.target.value)}
                     onBlur={() => onGramBlur(i)}
                     disabled={!editable}
@@ -625,4 +655,3 @@ function BakerCalculator({ recipe }: { recipe: ViewableRecipe }) {
     </div>
   );
 }
-

@@ -2,7 +2,14 @@
 // `UPLOADS_DIR/{bucket}/{path}` on a Docker volume (see docker-compose.yml).
 // Access is never direct filesystem/URL — always through a signed URL
 // (signed-url.server.ts) served by src/routes/api/public/files.$bucket.$.ts.
-import { mkdir, readFile as fsReadFile, rm, writeFile, copyFile as fsCopyFile, access } from "node:fs/promises";
+import {
+  mkdir,
+  readFile as fsReadFile,
+  rm,
+  writeFile,
+  copyFile as fsCopyFile,
+  access,
+} from "node:fs/promises";
 import path from "node:path";
 
 function uploadsRoot(): string {

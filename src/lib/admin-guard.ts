@@ -65,4 +65,3 @@ export async function assertAdminOrRedirect(queryClient?: QueryClient): Promise<
     bounceHome("error");
   }
 }
-

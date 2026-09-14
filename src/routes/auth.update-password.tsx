@@ -12,7 +12,10 @@ export const Route = createFileRoute("/auth/update-password")({
   head: () => ({
     meta: [
       { title: "Nueva contraseña — Melik Recipes" },
-      { name: "description", content: "Elige una nueva contraseña segura para tu cuenta de Melik Recipes." },
+      {
+        name: "description",
+        content: "Elige una nueva contraseña segura para tu cuenta de Melik Recipes.",
+      },
       { property: "og:title", content: "Nueva contraseña — Melik Recipes" },
       { property: "og:url", content: "https://melik-recipes.lovable.app/auth/update-password" },
       { name: "robots", content: "noindex" },
@@ -66,7 +69,9 @@ function UpdatePasswordPage() {
         </Link>
         <div className="mt-6 rounded-3xl border border-border bg-card/40 p-6 shadow-sm sm:p-8">
           <h1 className="font-display text-2xl font-semibold">Nueva contraseña</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Crea una contraseña segura para tu cuenta.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Crea una contraseña segura para tu cuenta.
+          </p>
           <form onSubmit={submit} className="mt-6 grid gap-4">
             <label className="grid gap-1.5">
               <span className="text-xs font-medium text-foreground/80">Contraseña</span>
@@ -91,7 +96,11 @@ function UpdatePasswordPage() {
                 className="h-11 w-full rounded-xl border border-border bg-background px-4 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </label>
-            {error && <p className="rounded-xl bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</p>}
+            {error && (
+              <p className="rounded-xl bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                {error}
+              </p>
+            )}
             <button
               type="submit"
               disabled={loading}

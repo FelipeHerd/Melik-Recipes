@@ -79,7 +79,17 @@ export const listOfficialRecipes = createServerFn({ method: "POST" })
     const { db } = await import("@/lib/db.server");
     let q = db
       .selectFrom("recipes")
-      .select(["id", "title", "category", "emoji", "time_minutes", "image_url", "created_at", "is_baker_mode", "is_premium_only"])
+      .select([
+        "id",
+        "title",
+        "category",
+        "emoji",
+        "time_minutes",
+        "image_url",
+        "created_at",
+        "is_baker_mode",
+        "is_premium_only",
+      ])
       .where("is_official_melik", "=", true)
       .where("is_draft", "=", false)
       .orderBy("created_at", "desc")
@@ -89,7 +99,9 @@ export const listOfficialRecipes = createServerFn({ method: "POST" })
 
     const hasMore = rows.length > limit;
     const trimmed = hasMore ? rows.slice(0, limit) : rows;
-    const nextCursor = hasMore ? new Date(trimmed[trimmed.length - 1].created_at).toISOString() : null;
+    const nextCursor = hasMore
+      ? new Date(trimmed[trimmed.length - 1].created_at).toISOString()
+      : null;
 
     const paths = trimmed.map((r) => r.image_url).filter((p): p is string => !!p);
     const signed = await signThumbnails(paths, COVER_THUMB);
@@ -101,7 +113,7 @@ export const listOfficialRecipes = createServerFn({ method: "POST" })
       emoji: r.emoji ?? "🍽️",
       timeMinutes: r.time_minutes ?? 0,
       imagePath: r.image_url ?? null,
-      imageUrl: r.image_url ? signed.get(r.image_url) ?? null : null,
+      imageUrl: r.image_url ? (signed.get(r.image_url) ?? null) : null,
       ingredients: [],
       instructions: [],
       createdAt: new Date(r.created_at).getTime(),
@@ -166,14 +178,19 @@ export const getOfficialRecipe = createServerFn({ method: "POST" })
 
     if (!isLocked) {
       const ingredients: Ingredient[] =
-        row.ingredients_json != null ? parseIngredients(row.ingredients_json) : parseIngredients(row.ingredients);
-      const stepsRaw = row.instructions_json != null ? parseSteps(row.instructions_json) : parseSteps(row.instructions);
+        row.ingredients_json != null
+          ? parseIngredients(row.ingredients_json)
+          : parseIngredients(row.ingredients);
+      const stepsRaw =
+        row.instructions_json != null
+          ? parseSteps(row.instructions_json)
+          : parseSteps(row.instructions);
       for (const s of stepsRaw) if (s.imagePath) paths.push(s.imagePath);
       const signed = await signMany(paths);
       const instructions: Step[] = stepsRaw.map((s) => ({
         text: s.text,
         imagePath: s.imagePath ?? null,
-        imageUrl: s.imagePath ? signed.get(s.imagePath) ?? null : null,
+        imageUrl: s.imagePath ? (signed.get(s.imagePath) ?? null) : null,
       }));
       return {
         id: row.id,
@@ -182,7 +199,7 @@ export const getOfficialRecipe = createServerFn({ method: "POST" })
         emoji: row.emoji ?? "🍽️",
         timeMinutes: row.time_minutes ?? 0,
         imagePath: row.image_url ?? null,
-        imageUrl: row.image_url ? signed.get(row.image_url) ?? null : null,
+        imageUrl: row.image_url ? (signed.get(row.image_url) ?? null) : null,
         ingredients,
         instructions,
         createdAt: new Date(row.created_at).getTime(),
@@ -201,7 +218,7 @@ export const getOfficialRecipe = createServerFn({ method: "POST" })
       emoji: row.emoji ?? "🍽️",
       timeMinutes: row.time_minutes ?? 0,
       imagePath: row.image_url ?? null,
-      imageUrl: row.image_url ? signed.get(row.image_url) ?? null : null,
+      imageUrl: row.image_url ? (signed.get(row.image_url) ?? null) : null,
       ingredients: [],
       instructions: [],
       createdAt: new Date(row.created_at).getTime(),
@@ -220,12 +237,25 @@ export const toggleDevPremium = createServerFn({ method: "POST" })
     const { assertDevOrReject } = await import("./dev-guard.server");
     await assertDevOrReject(context.userId);
     const { db } = await import("@/lib/db.server");
-    const current = await db.selectFrom("profiles").select(["is_premium"]).where("id", "=", context.userId).executeTakeFirst();
+    const current = await db
+      .selectFrom("profiles")
+      .select(["is_premium"])
+      .where("id", "=", context.userId)
+      .executeTakeFirst();
     const next = !(current?.is_premium ?? false);
-    await db.updateTable("profiles").set({ is_premium: next }).where("id", "=", context.userId).execute();
+    await db
+      .updateTable("profiles")
+      .set({ is_premium: next })
+      .where("id", "=", context.userId)
+      .execute();
 
     const { sendTemplatedNotification } = await import("./notifications.server");
-    await sendTemplatedNotification(context.userId, next ? "dev_plus_granted" : "dev_plus_revoked", {}, { initiatedBySelf: true });
+    await sendTemplatedNotification(
+      context.userId,
+      next ? "dev_plus_granted" : "dev_plus_revoked",
+      {},
+      { initiatedBySelf: true },
+    );
     return { isPremium: next };
   });
 
@@ -235,22 +265,39 @@ export const toggleDevPremium = createServerFn({ method: "POST" })
 
 export const grantSelfDevTrial = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((input: unknown) => z.object({ days: z.number().int().min(-1).max(365).nullable() }).parse(input))
+  .inputValidator((input: unknown) =>
+    z.object({ days: z.number().int().min(-1).max(365).nullable() }).parse(input),
+  )
   .handler(async ({ data, context }): Promise<{ premiumUntil: string | null }> => {
     const { assertDevOrReject } = await import("./dev-guard.server");
     await assertDevOrReject(context.userId);
     const { db } = await import("@/lib/db.server");
 
     if (data.days === null) {
-      await db.updateTable("profiles").set({ premium_until: null }).where("id", "=", context.userId).execute();
+      await db
+        .updateTable("profiles")
+        .set({ premium_until: null })
+        .where("id", "=", context.userId)
+        .execute();
       return { premiumUntil: null };
     }
 
-    const cur = await db.selectFrom("profiles").select(["premium_until"]).where("id", "=", context.userId).executeTakeFirst();
-    const base = cur?.premium_until && new Date(cur.premium_until) > new Date() ? new Date(cur.premium_until) : new Date();
+    const cur = await db
+      .selectFrom("profiles")
+      .select(["premium_until"])
+      .where("id", "=", context.userId)
+      .executeTakeFirst();
+    const base =
+      cur?.premium_until && new Date(cur.premium_until) > new Date()
+        ? new Date(cur.premium_until)
+        : new Date();
     base.setUTCDate(base.getUTCDate() + data.days);
     const iso = base.toISOString();
-    await db.updateTable("profiles").set({ premium_until: iso }).where("id", "=", context.userId).execute();
+    await db
+      .updateTable("profiles")
+      .set({ premium_until: iso })
+      .where("id", "=", context.userId)
+      .execute();
 
     const { sendTemplatedNotification } = await import("./notifications.server");
     const dias = data.days === 1 ? "1 día" : `${data.days} días`;
@@ -259,6 +306,11 @@ export const grantSelfDevTrial = createServerFn({ method: "POST" })
       month: "short",
       year: "numeric",
     });
-    await sendTemplatedNotification(context.userId, "dev_trial_granted", { duracion: dias, fecha_fin: fechaFin }, { initiatedBySelf: true });
+    await sendTemplatedNotification(
+      context.userId,
+      "dev_trial_granted",
+      { duracion: dias, fecha_fin: fechaFin },
+      { initiatedBySelf: true },
+    );
     return { premiumUntil: iso };
   });

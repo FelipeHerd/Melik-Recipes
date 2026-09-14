@@ -33,10 +33,7 @@ import {
   listOfficialRecipes,
   type OfficialRecipeCardDto,
 } from "@/lib/official-recipes.functions";
-import {
-  claimBakeryUnlock,
-  getMyBakeryEntitlements,
-} from "@/lib/melik-plus.functions";
+import { claimBakeryUnlock, getMyBakeryEntitlements } from "@/lib/melik-plus.functions";
 import { showError } from "@/lib/errors/toast";
 import type { ViewableRecipe } from "@/components/ViewRecipeModal";
 
@@ -50,8 +47,6 @@ const entitlementsQuery = queryOptions({
   queryFn: () => getMyBakeryEntitlements(),
   staleTime: 60 * 1000,
 });
-
-
 
 const OFFICIAL_PAGE_SIZE = 12;
 
@@ -132,7 +127,6 @@ export const Route = createFileRoute("/melik-bakery")({
   component: MelikBakeryPage,
 });
 
-
 type SortKey = "recent" | "az" | "time";
 
 function MelikBakeryPage() {
@@ -144,10 +138,9 @@ function MelikBakeryPage() {
         </p>
         <h1 className="font-display text-4xl font-semibold md:text-5xl">Melik Bakery</h1>
         <p className="max-w-xl text-muted-foreground">
-          Las recetas oficiales de Melik Bakery. Con Melik+ ganas un desbloqueo
-          permanente cada 6 meses acumulados de suscripción. Además, te regalamos
-          5% de descuento en todas las compras que hagas en Melik Bakery a través
-          de su{" "}
+          Las recetas oficiales de Melik Bakery. Con Melik+ ganas un desbloqueo permanente cada 6
+          meses acumulados de suscripción. Además, te regalamos 5% de descuento en todas las compras
+          que hagas en Melik Bakery a través de su{" "}
           <a
             href="https://melikbakery.com/"
             target="_blank"
@@ -208,15 +201,14 @@ function EntitlementsBanner() {
             {paidMonthsTotal === 0
               ? "Suscríbete a Melik+ para empezar a acumular meses."
               : monthsToNext === 0
-              ? "¡Canjea la receta oficial que quieras!"
-              : `Faltan ${monthsToNext} ${monthsToNext === 1 ? "mes" : "meses"} para tu próximo desbloqueo (mes ${cycleMonth + monthsToNext} del ciclo).`}
+                ? "¡Canjea la receta oficial que quieras!"
+                : `Faltan ${monthsToNext} ${monthsToNext === 1 ? "mes" : "meses"} para tu próximo desbloqueo (mes ${cycleMonth + monthsToNext} del ciclo).`}
           </p>
         </div>
       </div>
     </div>
   );
 }
-
 
 function BakerySkeleton() {
   return (
@@ -245,7 +237,6 @@ function BakeryList() {
     () => new Set(entitlements?.unlockedRecipeIds ?? []),
     [entitlements?.unlockedRecipeIds],
   );
-
 
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortKey>("recent");
@@ -368,7 +359,6 @@ function BakeryList() {
                 unlocked={unlockedIds.has(r.id)}
                 onOpen={() => onOpen(r)}
               />
-
             ))}
           </div>
           {hasNextPage && (
@@ -407,7 +397,6 @@ function OfficialCard({
   unlocked?: boolean;
   onOpen: () => void;
 }) {
-
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-3xl border border-border/60 bg-card transition-shadow hover:shadow-lg">
       <button
@@ -444,7 +433,6 @@ function OfficialCard({
             <Crown className="h-3 w-3" /> Melik+
           </span>
         ) : null}
-
       </button>
       <div className="flex flex-1 flex-col gap-3 p-5">
         <button type="button" onClick={onOpen} className="text-left focus:outline-none">
@@ -559,4 +547,3 @@ function OfficialRecipeLoader({
     />
   );
 }
-

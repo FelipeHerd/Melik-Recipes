@@ -46,7 +46,10 @@ export const getAdminStats = createServerFn({ method: "GET" })
     const { sql } = await import("kysely");
 
     const [usersRow, recipesRow, officialRow] = await Promise.all([
-      db.selectFrom("profiles").select(sql<number>`count(*)`.as("count")).executeTakeFirstOrThrow(),
+      db
+        .selectFrom("profiles")
+        .select(sql<number>`count(*)`.as("count"))
+        .executeTakeFirstOrThrow(),
       db
         .selectFrom("recipes")
         .select(sql<number>`count(*)`.as("count"))
@@ -97,7 +100,11 @@ export const searchAdminUsers = createServerFn({ method: "POST" })
 
     const ids = matches.map((u) => u.id);
     const [profs, roles, recipes] = await Promise.all([
-      db.selectFrom("profiles").select(["id", "first_name", "last_name", "is_premium"]).where("id", "in", ids).execute(),
+      db
+        .selectFrom("profiles")
+        .select(["id", "first_name", "last_name", "is_premium"])
+        .where("id", "in", ids)
+        .execute(),
       db.selectFrom("user_roles").select(["user_id", "role"]).where("user_id", "in", ids).execute(),
       db
         .selectFrom("recipes")
@@ -244,7 +251,11 @@ export const deleteNotification = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => notifIdSchema.parse(input))
   .handler(async ({ data, context }): Promise<{ ok: true }> => {
     const { db } = await import("@/lib/db.server");
-    await db.deleteFrom("notifications").where("id", "=", data.id).where("user_id", "=", context.userId).execute();
+    await db
+      .deleteFrom("notifications")
+      .where("id", "=", data.id)
+      .where("user_id", "=", context.userId)
+      .execute();
     return { ok: true };
   });
 

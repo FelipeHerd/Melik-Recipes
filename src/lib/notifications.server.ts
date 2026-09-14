@@ -38,9 +38,16 @@ export async function sendTemplatedNotification(
   if (templateId === "custom") return { inserted: false, reason: "custom_not_supported" };
 
   try {
-    const profile = await db.selectFrom("profiles").select(["first_name", "username"]).where("id", "=", userId).executeTakeFirst();
+    const profile = await db
+      .selectFrom("profiles")
+      .select(["first_name", "username"])
+      .where("id", "=", userId)
+      .executeTakeFirst();
 
-    const nombre = (profile?.first_name?.trim() || profile?.username?.trim() || "hola").slice(0, 60);
+    const nombre = (profile?.first_name?.trim() || profile?.username?.trim() || "hola").slice(
+      0,
+      60,
+    );
 
     const title = render(template.title, nombre, ctx).slice(0, 200);
     const message = render(template.message, nombre, ctx).slice(0, 2000);
@@ -61,7 +68,13 @@ export async function sendTemplatedNotification(
 
     await db
       .insertInto("notifications")
-      .values({ user_id: userId, title, message, type: template.type, is_read: opts.initiatedBySelf === true })
+      .values({
+        user_id: userId,
+        title,
+        message,
+        type: template.type,
+        is_read: opts.initiatedBySelf === true,
+      })
       .execute();
     return { inserted: true };
   } catch (err) {

@@ -38,7 +38,11 @@ function formatBlockedUntil(iso: string): string {
 
 async function assertKikoNotBlocked(userId: string) {
   const { db } = await import("@/lib/db.server");
-  const data = await db.selectFrom("profiles").select(["kiko_blocked_until"]).where("id", "=", userId).executeTakeFirst();
+  const data = await db
+    .selectFrom("profiles")
+    .select(["kiko_blocked_until"])
+    .where("id", "=", userId)
+    .executeTakeFirst();
   const until = data?.kiko_blocked_until;
   if (until && new Date(until) > new Date()) {
     throw new Error(
@@ -114,7 +118,7 @@ function normalizeForGreeting(input: string): string {
     .toLowerCase()
     .normalize("NFD")
     .replace(new RegExp("[\u0300-\u036f]", "g"), "")
-    .replace(/[¡!¿?.,;:()"'`~^@#$%&*_\-+=/\\|<>{}\[\]]/g, " ")
+    .replace(/[¡!¿?.,;:()"'`~^@#$%&*_\-+=/\\|<>{}[\]]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -140,9 +144,10 @@ export const generateChatTitle = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<{ title: string | null; skipped: boolean }> => {
     await assertKikoNotBlocked(context.userId);
 
-    const userMessages = (data.recentUserMessages && data.recentUserMessages.length > 0)
-      ? data.recentUserMessages
-      : [data.firstUserMessage];
+    const userMessages =
+      data.recentUserMessages && data.recentUserMessages.length > 0
+        ? data.recentUserMessages
+        : [data.firstUserMessage];
 
     // Cheap gate: single trivial opener → keep "Nuevo chat".
     if (userMessages.length <= 1 && isTrivialOpener(userMessages[0] ?? "")) {

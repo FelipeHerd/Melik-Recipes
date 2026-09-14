@@ -90,7 +90,13 @@ export function AvatarEditor({ userId, avatarUrl, initials }: Props) {
           className="grid h-20 w-20 place-items-center overflow-hidden rounded-3xl bg-primary text-2xl font-semibold text-primary-foreground focus:outline-none focus:ring-2 focus:ring-ring"
         >
           {avatarUrl ? (
-            <img src={avatarUrl} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+            <img
+              src={avatarUrl}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover"
+            />
           ) : (
             initials
           )}

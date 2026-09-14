@@ -86,11 +86,8 @@ function NotificationsPage() {
   return (
     <div className="mx-auto w-full max-w-2xl px-5 py-6 md:px-8 md:py-10">
       <header className="mb-6">
-        <h1 className="font-display text-2xl font-semibold leading-tight">
-          Notificaciones
-        </h1>
+        <h1 className="font-display text-2xl font-semibold leading-tight">Notificaciones</h1>
       </header>
-
 
       {!userId || notificationsQuery.isLoading ? (
         <LoadingState />
@@ -180,7 +177,10 @@ function LoadingState() {
   return (
     <div className="flex flex-col gap-3">
       {[0, 1, 2].map((i) => (
-        <div key={i} className="h-28 animate-pulse rounded-2xl border border-border/60 bg-card/30" />
+        <div
+          key={i}
+          className="h-28 animate-pulse rounded-2xl border border-border/60 bg-card/30"
+        />
       ))}
     </div>
   );
@@ -201,9 +201,7 @@ function ErrorState() {
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center gap-3 rounded-3xl border border-dashed border-border/60 bg-card/30 px-6 py-16 text-center">
-      <h2 className="font-display text-xl font-semibold">
-        Aún no tienes notificaciones
-      </h2>
+      <h2 className="font-display text-xl font-semibold">Aún no tienes notificaciones</h2>
 
       <p className="max-w-sm text-sm text-muted-foreground">
         Cuando tengas mensajes nuevos, aparecerán aquí.

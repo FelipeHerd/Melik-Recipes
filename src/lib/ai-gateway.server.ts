@@ -4,8 +4,7 @@
 // this is a URL/key swap plus a real (non-gateway-routed) model id.
 
 type ContentBlock =
-  | { type: "text"; text: string }
-  | { type: "image_url"; image_url: { url: string } };
+  { type: "text"; text: string } | { type: "image_url"; image_url: { url: string } };
 
 export type ChatMessage = {
   role: "system" | "user" | "assistant";

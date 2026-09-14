@@ -20,7 +20,10 @@ const signUpSchema = z
     confirm: z.string(),
     accepted: z.literal(true, { errorMap: () => ({ message: "Debes aceptar la política" }) }),
   })
-  .refine((d) => d.password === d.confirm, { path: ["confirm"], message: "Las contraseñas no coinciden" });
+  .refine((d) => d.password === d.confirm, {
+    path: ["confirm"],
+    message: "Las contraseñas no coinciden",
+  });
 
 export default function SignUpForm({ redirectTo }: { redirectTo: string }) {
   const navigate = useNavigate();
@@ -56,7 +59,15 @@ export default function SignUpForm({ redirectTo }: { redirectTo: string }) {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    const parsed = signUpSchema.safeParse({ firstName, lastName, username, email, password, confirm, accepted });
+    const parsed = signUpSchema.safeParse({
+      firstName,
+      lastName,
+      username,
+      email,
+      password,
+      confirm,
+      accepted,
+    });
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message ?? "Revisa los datos");
       return;
@@ -166,11 +177,14 @@ export default function SignUpForm({ redirectTo }: { redirectTo: string }) {
           className="mt-0.5 h-4 w-4 accent-[color:var(--primary)]"
         />
         <span>
-          Acepto los Términos de Servicio y la Política de Tratamiento de Datos Personales (Habeas Data).
+          Acepto los Términos de Servicio y la Política de Tratamiento de Datos Personales (Habeas
+          Data).
         </span>
       </label>
 
-      {error && <p className="rounded-xl bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</p>}
+      {error && (
+        <p className="rounded-xl bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</p>
+      )}
 
       <button
         type="submit"

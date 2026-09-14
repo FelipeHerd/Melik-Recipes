@@ -49,7 +49,11 @@ export const listDiscoverChats = createServerFn({ method: "GET" })
       .orderBy("updated_at", "desc")
       .limit(100)
       .execute();
-    return rows.map((r) => ({ id: r.id, title: r.title, updatedAt: isoOrNull(r.updated_at) as string }));
+    return rows.map((r) => ({
+      id: r.id,
+      title: r.title,
+      updatedAt: isoOrNull(r.updated_at) as string,
+    }));
   });
 
 // ---------- GET (resolves signed URLs) ----------
@@ -139,7 +143,10 @@ export const appendDiscoverMessage = createServerFn({ method: "POST" })
     if (!row) throw new Error("APP-RCP-001: not found");
 
     const current = Array.isArray(row.messages) ? (row.messages as StoredMessage[]) : [];
-    const next: StoredMessage[] = [...current, { ...data.message, created_at: new Date().toISOString() }];
+    const next: StoredMessage[] = [
+      ...current,
+      { ...data.message, created_at: new Date().toISOString() },
+    ];
 
     await db
       .updateTable("discover_chats")
@@ -179,12 +186,18 @@ export const deleteDiscoverChat = createServerFn({ method: "POST" })
       .where("id", "=", data.id)
       .where("user_id", "=", context.userId)
       .executeTakeFirst();
-    const paths = (row?.messages as StoredMessage[] | undefined)?.map((m) => m.image_path).filter((p): p is string => !!p);
+    const paths = (row?.messages as StoredMessage[] | undefined)
+      ?.map((m) => m.image_path)
+      .filter((p): p is string => !!p);
     if (paths && paths.length > 0) {
       const { deleteFile } = await import("@/lib/storage/local-storage.server");
       await Promise.all(paths.map((p) => deleteFile(CHAT_IMAGE_BUCKET, p).catch(() => {})));
     }
-    await db.deleteFrom("discover_chats").where("id", "=", data.id).where("user_id", "=", context.userId).execute();
+    await db
+      .deleteFrom("discover_chats")
+      .where("id", "=", data.id)
+      .where("user_id", "=", context.userId)
+      .execute();
     return { ok: true };
   });
 

@@ -3,7 +3,11 @@
 // routes under src/routes/api/public/hooks/ (kept as a manual-trigger
 // escape hatch). Previously triggered by Supabase's pg_cron.
 
-export async function runTrialExpiringReminder(): Promise<{ ok: true; scanned: number; notified: number }> {
+export async function runTrialExpiringReminder(): Promise<{
+  ok: true;
+  scanned: number;
+  notified: number;
+}> {
   const { db } = await import("@/lib/db.server");
 
   const now = new Date();
@@ -19,7 +23,9 @@ export async function runTrialExpiringReminder(): Promise<{ ok: true; scanned: n
     .execute();
 
   const pending = candidates.filter((p) => {
-    const notifiedFor = p.trial_expiring_notified_for ? p.trial_expiring_notified_for.getTime() : null;
+    const notifiedFor = p.trial_expiring_notified_for
+      ? p.trial_expiring_notified_for.getTime()
+      : null;
     const premiumUntil = p.premium_until ? p.premium_until.getTime() : null;
     return notifiedFor !== premiumUntil;
   });
@@ -51,14 +57,23 @@ export async function runTrialExpiringReminder(): Promise<{ ok: true; scanned: n
       continue;
     }
 
-    await db.updateTable("profiles").set({ trial_expiring_notified_for: p.premium_until }).where("id", "=", p.id).execute();
+    await db
+      .updateTable("profiles")
+      .set({ trial_expiring_notified_for: p.premium_until })
+      .where("id", "=", p.id)
+      .execute();
     notified++;
   }
 
   return { ok: true, scanned: candidates.length, notified };
 }
 
-export async function runMelikPlusRenew(): Promise<{ ok: true; renewed: number; failed: number; downgraded: number }> {
+export async function runMelikPlusRenew(): Promise<{
+  ok: true;
+  renewed: number;
+  failed: number;
+  downgraded: number;
+}> {
   const { db } = await import("@/lib/db.server");
   const now = new Date();
 
@@ -141,7 +156,8 @@ export async function runMelikPlusRenew(): Promise<{ ok: true; renewed: number; 
       .values({
         user_id: p.id,
         title: "Tu suscripción Melik+ terminó",
-        message: "Tu período pagado terminó y tu cuenta volvió al plan gratuito. Puedes reactivar Melik+ cuando quieras desde tu perfil.",
+        message:
+          "Tu período pagado terminó y tu cuenta volvió al plan gratuito. Puedes reactivar Melik+ cuando quieras desde tu perfil.",
         type: "melik_plus",
       })
       .execute();

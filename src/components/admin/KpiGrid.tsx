@@ -30,12 +30,42 @@ export function KpiGrid({ stats }: { stats: AdminStatsV2 | undefined }) {
   const fmt = (n: number | undefined) => (n == null ? "—" : n.toLocaleString("es-ES"));
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-      <Card label="Usuarios" value={fmt(s?.totalUsers)} icon={Users} tint="bg-blue-500/10 text-blue-400" />
-      <Card label="Melik+ activos" value={fmt(s?.premiumActive)} icon={Crown} tint="bg-amber-500/10 text-amber-400" />
-      <Card label="En prueba" value={fmt(s?.premiumTrials)} icon={Sparkles} tint="bg-fuchsia-500/10 text-fuchsia-400" />
-      <Card label="Recetas totales" value={fmt(s?.totalRecipes)} icon={BookOpen} tint="bg-emerald-500/10 text-emerald-400" />
-      <Card label="Oficiales Melik" value={fmt(s?.officialRecipes)} icon={Croissant} tint="bg-orange-500/10 text-orange-400" />
-      <Card label="Kiko este mes" value={fmt(s?.kikoRequestsThisMonth)} icon={MessageCircle} tint="bg-primary/15 text-primary" />
+      <Card
+        label="Usuarios"
+        value={fmt(s?.totalUsers)}
+        icon={Users}
+        tint="bg-blue-500/10 text-blue-400"
+      />
+      <Card
+        label="Melik+ activos"
+        value={fmt(s?.premiumActive)}
+        icon={Crown}
+        tint="bg-amber-500/10 text-amber-400"
+      />
+      <Card
+        label="En prueba"
+        value={fmt(s?.premiumTrials)}
+        icon={Sparkles}
+        tint="bg-fuchsia-500/10 text-fuchsia-400"
+      />
+      <Card
+        label="Recetas totales"
+        value={fmt(s?.totalRecipes)}
+        icon={BookOpen}
+        tint="bg-emerald-500/10 text-emerald-400"
+      />
+      <Card
+        label="Oficiales Melik"
+        value={fmt(s?.officialRecipes)}
+        icon={Croissant}
+        tint="bg-orange-500/10 text-orange-400"
+      />
+      <Card
+        label="Kiko este mes"
+        value={fmt(s?.kikoRequestsThisMonth)}
+        icon={MessageCircle}
+        tint="bg-primary/15 text-primary"
+      />
     </div>
   );
 }

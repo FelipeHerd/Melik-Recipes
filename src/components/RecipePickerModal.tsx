@@ -34,9 +34,7 @@ export function RecipePickerModal({
 
   const filteredMine = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return q
-      ? recipes.filter((r) => r.title.toLowerCase().includes(q))
-      : recipes;
+    return q ? recipes.filter((r) => r.title.toLowerCase().includes(q)) : recipes;
   }, [recipes, query]);
 
   const filteredOfficial = useMemo(() => {
@@ -137,9 +135,7 @@ export function RecipePickerModal({
                   <li key={r.id}>
                     <button
                       type="button"
-                      onClick={() =>
-                        onSelect({ id: r.id, title: r.title, source: "mine" })
-                      }
+                      onClick={() => onSelect({ id: r.id, title: r.title, source: "mine" })}
                       className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card px-3 py-2.5 text-left transition hover:border-primary/60 hover:bg-card/70"
                     >
                       <span className="grid h-10 w-10 flex-none place-items-center rounded-xl bg-background text-2xl">
@@ -179,9 +175,7 @@ export function RecipePickerModal({
                     <button
                       type="button"
                       disabled={locked}
-                      onClick={() =>
-                        onSelect({ id: r.id, title: r.title, source: "official" })
-                      }
+                      onClick={() => onSelect({ id: r.id, title: r.title, source: "official" })}
                       className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card px-3 py-2.5 text-left transition hover:border-primary/60 hover:bg-card/70 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-border disabled:hover:bg-card"
                     >
                       <span className="grid h-10 w-10 flex-none place-items-center rounded-xl bg-background text-2xl">
@@ -229,15 +223,7 @@ function ListSkeleton() {
   );
 }
 
-function EmptyState({
-  icon,
-  title,
-  text,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  text: string;
-}) {
+function EmptyState({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
   return (
     <div className="flex flex-col items-center justify-center gap-2 px-6 py-10 text-center">
       <span className="grid h-11 w-11 place-items-center rounded-2xl bg-primary/10 text-primary">

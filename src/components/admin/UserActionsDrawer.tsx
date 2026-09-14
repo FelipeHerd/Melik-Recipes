@@ -3,12 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Ban, Clock, Crown, ExternalLink, Shield, UserCog } from "lucide-react";
 import { toast } from "sonner";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   setKikoBlock,
   grantTrial,
@@ -104,8 +99,7 @@ export function UserActionsDrawer({
   };
 
   const kikoMut = useMutation({
-    mutationFn: (until: string | null) =>
-      setKikoBlock({ data: { userId: row!.userId, until } }),
+    mutationFn: (until: string | null) => setKikoBlock({ data: { userId: row!.userId, until } }),
     onSuccess: (_r, until) => {
       toast.success(until ? "Kiko pausado" : "Kiko reactivado");
       invalidateAll();
@@ -153,8 +147,7 @@ export function UserActionsDrawer({
   });
 
   const open = row !== null;
-  const isBlocked =
-    !!row?.kikoBlockedUntil && new Date(row.kikoBlockedUntil) > new Date();
+  const isBlocked = !!row?.kikoBlockedUntil && new Date(row.kikoBlockedUntil) > new Date();
 
   return (
     <Sheet
@@ -173,7 +166,9 @@ export function UserActionsDrawer({
         {row && (
           <>
             <SheetHeader className="text-left">
-              <SheetTitle className="text-zinc-100">Acciones sobre @{row.username ?? "usuario"}</SheetTitle>
+              <SheetTitle className="text-zinc-100">
+                Acciones sobre @{row.username ?? "usuario"}
+              </SheetTitle>
               <div className="mt-2 flex items-center gap-3">
                 <span className="grid h-12 w-12 overflow-hidden rounded-full bg-zinc-800 text-sm">
                   {row.avatarUrl ? (
@@ -194,13 +189,20 @@ export function UserActionsDrawer({
             <div className="mt-6 space-y-4">
               <Section title="Acceso a Kiko" icon={Ban}>
                 <p className="text-xs text-zinc-500">
-                  Estado actual: {isBlocked ? `bloqueado hasta ${fmtDate(row.kikoBlockedUntil)}` : "activo"}
+                  Estado actual:{" "}
+                  {isBlocked ? `bloqueado hasta ${fmtDate(row.kikoBlockedUntil)}` : "activo"}
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  <ActionButton onClick={() => kikoMut.mutate(daysFromNow(1))} disabled={kikoMut.isPending}>
+                  <ActionButton
+                    onClick={() => kikoMut.mutate(daysFromNow(1))}
+                    disabled={kikoMut.isPending}
+                  >
                     24 horas
                   </ActionButton>
-                  <ActionButton onClick={() => kikoMut.mutate(daysFromNow(7))} disabled={kikoMut.isPending}>
+                  <ActionButton
+                    onClick={() => kikoMut.mutate(daysFromNow(7))}
+                    disabled={kikoMut.isPending}
+                  >
                     7 días
                   </ActionButton>
                   {isBlocked && (
@@ -244,8 +246,8 @@ export function UserActionsDrawer({
                 </p>
                 <p className="text-xs text-zinc-400">
                   Meses pagados totales:{" "}
-                  <span className="font-semibold text-zinc-200">{row.paidMonthsTotal}</span>{" "}
-                  · Desbloqueos ganados:{" "}
+                  <span className="font-semibold text-zinc-200">{row.paidMonthsTotal}</span> ·
+                  Desbloqueos ganados:{" "}
                   <span className="font-semibold text-zinc-200">
                     {row.paidMonthsTotal >= 1 ? Math.floor((row.paidMonthsTotal - 1) / 6) + 1 : 0}
                   </span>
@@ -301,7 +303,10 @@ export function UserActionsDrawer({
                         }`}
                       >
                         {r === "admin" ? (
-                          <><Shield className="mr-1 inline h-3 w-3" />admin</>
+                          <>
+                            <Shield className="mr-1 inline h-3 w-3" />
+                            admin
+                          </>
                         ) : r === "dev" ? (
                           <>dev</>
                         ) : (

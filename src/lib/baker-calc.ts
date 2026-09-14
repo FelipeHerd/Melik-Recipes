@@ -3,7 +3,17 @@
 import type { Ingredient } from "@/lib/recipe-format";
 
 /** Categories that flip ViewRecipeModal into calculator mode. */
-const BAKING_KEYWORDS = ["pan", "panaderia", "masa", "sourdough", "focaccia", "baguette", "pizza", "brioche", "croissant"];
+const BAKING_KEYWORDS = [
+  "pan",
+  "panaderia",
+  "masa",
+  "sourdough",
+  "focaccia",
+  "baguette",
+  "pizza",
+  "brioche",
+  "croissant",
+];
 
 function normalizeCategory(cat: string | null | undefined): string {
   return (cat ?? "")

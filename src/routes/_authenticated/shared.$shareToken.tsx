@@ -10,10 +10,7 @@ import { getSharedRecipe, saveSharedRecipe } from "@/lib/share.functions";
 
 export const Route = createFileRoute("/_authenticated/shared/$shareToken")({
   head: () => ({
-    meta: [
-      { title: "Receta compartida — Melik Recipes" },
-      { name: "robots", content: "noindex" },
-    ],
+    meta: [{ title: "Receta compartida — Melik Recipes" }, { name: "robots", content: "noindex" }],
   }),
   component: SharedRecipePage,
 });
@@ -100,7 +97,7 @@ function SharedRecipePage() {
 
       <div className="mt-4 overflow-hidden rounded-3xl bg-gradient-to-br from-[color:var(--ochre)]/30 to-primary/20 px-6 pb-6 pt-8 sm:px-10 sm:pt-10">
         <div className="flex items-center gap-4">
-          {!(isCustomCategory(data.category)) && !data.imageUrl && (
+          {!isCustomCategory(data.category) && !data.imageUrl && (
             <span
               className="grid h-16 w-16 place-items-center rounded-2xl bg-background/70 text-4xl backdrop-blur"
               aria-hidden

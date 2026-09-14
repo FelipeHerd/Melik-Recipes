@@ -6,7 +6,17 @@ export type Ingredient = { quantity: string; unit: string; name: string };
 export type Step = { text: string; imagePath?: string | null; imageUrl?: string | null };
 
 export const UNIT_OPTIONS: string[] = [
-  "", "gr", "kg", "ml", "l", "taza", "cda", "cdta", "unidad", "pizca", "al gusto",
+  "",
+  "gr",
+  "kg",
+  "ml",
+  "l",
+  "taza",
+  "cda",
+  "cdta",
+  "unidad",
+  "pizca",
+  "al gusto",
 ];
 const UNIT_SET = new Set(UNIT_OPTIONS.filter(Boolean).map((u) => u.toLowerCase()));
 
@@ -133,5 +143,8 @@ export function ingredientsToText(list: Ingredient[]): string {
 }
 
 export function stepsToText(list: Step[]): string {
-  return list.map((s) => s.text).filter(Boolean).join("\n");
+  return list
+    .map((s) => s.text)
+    .filter(Boolean)
+    .join("\n");
 }

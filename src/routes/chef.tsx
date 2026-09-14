@@ -1,7 +1,19 @@
 import { createFileRoute, Link, useSearch, useRouter } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
-import { Send, Sparkles, ChefHat, X, CheckCircle2, Circle, Lock, ArrowLeft, RotateCcw, BookOpen, Mic } from "lucide-react";
+import {
+  Send,
+  Sparkles,
+  ChefHat,
+  X,
+  CheckCircle2,
+  Circle,
+  Lock,
+  ArrowLeft,
+  RotateCcw,
+  BookOpen,
+  Mic,
+} from "lucide-react";
 import { useKikoVoice } from "@/hooks/use-kiko-voice";
 import { VoiceCallBar } from "@/components/chef/VoiceCallBar";
 import { VoiceLimitModal } from "@/components/chef/VoiceLimitModal";
@@ -17,7 +29,11 @@ import { ChatRecipeAttachmentCard } from "@/components/ChatRecipeAttachmentCard"
 import type { AttachedImage } from "@/components/ChatImageAttach";
 import { chefChat } from "@/lib/chef-ai.functions";
 import { CHEF_PERSONAL_SYSTEM_PROMPT } from "@/lib/prompts";
-import { buildUserPromptWithRecipe, formatRecipeForLLM, type AttachedRecipe } from "@/lib/recipe-context";
+import {
+  buildUserPromptWithRecipe,
+  formatRecipeForLLM,
+  type AttachedRecipe,
+} from "@/lib/recipe-context";
 import { getOfficialRecipe } from "@/lib/official-recipes.functions";
 import { toast } from "sonner";
 import { showError } from "@/lib/errors/toast";
@@ -46,9 +62,17 @@ export const Route = createFileRoute("/chef")({
   head: () => ({
     meta: [
       { title: "Kiko — Cocina con IA | Melik Recipes" },
-      { name: "description", content: "Chatea con Kiko, un asistente IA que reconoce ingredientes y te guía paso a paso por cada receta." },
+      {
+        name: "description",
+        content:
+          "Chatea con Kiko, un asistente IA que reconoce ingredientes y te guía paso a paso por cada receta.",
+      },
       { property: "og:title", content: "Kiko — Cocina con IA" },
-      { property: "og:description", content: "Chatea con Kiko, un asistente IA que reconoce ingredientes y te guía paso a paso." },
+      {
+        property: "og:description",
+        content:
+          "Chatea con Kiko, un asistente IA que reconoce ingredientes y te guía paso a paso.",
+      },
       { property: "og:url", content: "https://melik-recipes.lovable.app/chef" },
     ],
     links: [{ rel: "canonical", href: "https://melik-recipes.lovable.app/chef" }],
@@ -56,7 +80,14 @@ export const Route = createFileRoute("/chef")({
   component: ChefPage,
 });
 
-type TextMsg = { id: string; role: "user" | "assistant"; type: "text"; content: string; attachedRecipe?: AttachedRecipe; voice?: boolean };
+type TextMsg = {
+  id: string;
+  role: "user" | "assistant";
+  type: "text";
+  content: string;
+  attachedRecipe?: AttachedRecipe;
+  voice?: boolean;
+};
 type WizardMsg = { id: string; role: "assistant"; type: "wizard"; recipeId: string };
 type Msg = TextMsg | WizardMsg;
 
@@ -72,10 +103,37 @@ type ChefMemory = {
 const SESSION_KEY = "meliks.chef.session.v1";
 
 const INGREDIENT_VOCAB = [
-  "tomate", "queso", "mozzarella", "huevo", "huevos", "harina", "leche", "pollo",
-  "arroz", "pasta", "cebolla", "ajo", "albahaca", "carne", "atún", "papa", "papas",
-  "zanahoria", "espinaca", "lechuga", "limón", "manzana", "plátano", "avena",
-  "mantequilla", "azúcar", "sal", "pimienta", "aceite", "pan", "jamón",
+  "tomate",
+  "queso",
+  "mozzarella",
+  "huevo",
+  "huevos",
+  "harina",
+  "leche",
+  "pollo",
+  "arroz",
+  "pasta",
+  "cebolla",
+  "ajo",
+  "albahaca",
+  "carne",
+  "atún",
+  "papa",
+  "papas",
+  "zanahoria",
+  "espinaca",
+  "lechuga",
+  "limón",
+  "manzana",
+  "plátano",
+  "avena",
+  "mantequilla",
+  "azúcar",
+  "sal",
+  "pimienta",
+  "aceite",
+  "pan",
+  "jamón",
 ];
 
 const QUICK_ACTIONS = [
@@ -126,7 +184,7 @@ function ChefPage() {
   const [messages, setMessages] = useState<Msg[]>(initial.messages);
   const [memory, setMemory] = useState<ChefMemory>(initial.memory);
   const [input, setInput] = useState("");
-  
+
   const [thinking, setThinking] = useState(false);
   const [image, setImage] = useState<AttachedImage | null>(null);
   const [attachedRecipe, setAttachedRecipe] = useState<AttachedRecipe | null>(null);
@@ -163,8 +221,6 @@ function ChefPage() {
     }
   }, [isMobile]);
 
-
-
   // Detect virtual keyboard on mobile via visualViewport
   useEffect(() => {
     if (typeof window === "undefined" || !window.visualViewport) return;
@@ -191,7 +247,12 @@ function ChefPage() {
     }));
     setMessages((m) => [
       ...m,
-      { id: crypto.randomUUID(), role: "assistant", type: "text", content: `¡Perfecto! Vamos a cocinar **${r.title}** juntos. Te guío paso a paso 👇 Dime "siguiente" cuando termines cada paso.` },
+      {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        type: "text",
+        content: `¡Perfecto! Vamos a cocinar **${r.title}** juntos. Te guío paso a paso 👇 Dime "siguiente" cuando termines cada paso.`,
+      },
       { id: crypto.randomUUID(), role: "assistant", type: "wizard", recipeId: r.id },
     ]);
   }, []);
@@ -205,7 +266,10 @@ function ChefPage() {
   }, [recipeId]);
 
   function pushAssistant(text: string) {
-    setMessages((m) => [...m, { id: crypto.randomUUID(), role: "assistant", type: "text", content: text }]);
+    setMessages((m) => [
+      ...m,
+      { id: crypto.randomUUID(), role: "assistant", type: "text", content: text },
+    ]);
   }
 
   function findRecipeReference(text: string): Recipe | null {
@@ -214,7 +278,9 @@ function ChefPage() {
     if (direct) return direct;
     const ordinalMatch = lower.match(/\b(primera|segunda|tercera|1|2|3|esa|la anterior)\b/);
     if (ordinalMatch && memory.suggestedRecipeIds.length > 0) {
-      const idx = { primera: 0, "1": 0, segunda: 1, "2": 1, tercera: 2, "3": 2 }[ordinalMatch[1] as string] ?? 0;
+      const idx =
+        { primera: 0, "1": 0, segunda: 1, "2": 1, tercera: 2, "3": 2 }[ordinalMatch[1] as string] ??
+        0;
       const id = memory.suggestedRecipeIds[idx] ?? memory.suggestedRecipeIds[0];
       return recipes.find((r) => r.id === id) ?? null;
     }
@@ -224,7 +290,9 @@ function ChefPage() {
   function generateReply(userText: string) {
     const lower = userText.toLowerCase();
     const newIngredients = extractIngredients(userText);
-    const mergedIngredients = Array.from(new Set([...memory.mentionedIngredients, ...newIngredients]));
+    const mergedIngredients = Array.from(
+      new Set([...memory.mentionedIngredients, ...newIngredients]),
+    );
 
     // Intent: progress in active wizard
     const progressRegex = /\b(siguiente|listo|hecho|ya está|ya esta|continuar|próximo|proximo)\b/;
@@ -244,9 +312,13 @@ function ChefPage() {
           lastIntent: "progress",
         }));
         if (nextIdx >= steps.length) {
-          pushAssistant(`¡Terminaste **${recipe.title}**! 🎉 ¿Quieres que te sugiera un postre o guardamos otra para luego?`);
+          pushAssistant(
+            `¡Terminaste **${recipe.title}**! 🎉 ¿Quieres que te sugiera un postre o guardamos otra para luego?`,
+          );
         } else {
-          pushAssistant(`Paso ${nextIdx + 1} de ${steps.length}:\n\n**${steps[nextIdx]}**\n\nAvísame cuando esté listo.`);
+          pushAssistant(
+            `Paso ${nextIdx + 1} de ${steps.length}:\n\n**${steps[nextIdx]}**\n\nAvísame cuando esté listo.`,
+          );
         }
         return;
       }
@@ -263,11 +335,17 @@ function ChefPage() {
     }
 
     // Intent: suggest based on ingredients (uses memory!)
-    if (newIngredients.length > 0 || /\b(tengo|sugerir|sugiere|qué cocino|que cocino|ideas?)\b/.test(lower)) {
+    if (
+      newIngredients.length > 0 ||
+      /\b(tengo|sugerir|sugiere|qué cocino|que cocino|ideas?)\b/.test(lower)
+    ) {
       const ing = mergedIngredients;
       const matches = recipes
         .map((r) => {
-          const ingText = r.ingredients.map((i) => `${i.quantity} ${i.unit} ${i.name}`).join(" ").toLowerCase();
+          const ingText = r.ingredients
+            .map((i) => `${i.quantity} ${i.unit} ${i.name}`)
+            .join(" ")
+            .toLowerCase();
           const hits = ing.filter((w) => ingText.includes(w)).length;
           return { r, hits };
         })
@@ -284,11 +362,17 @@ function ChefPage() {
       }));
 
       if (suggested.length > 0) {
-        const list = suggested.map((r, i) => `${i + 1}. **${r.title}** (${r.timeMinutes} min)`).join("\n");
+        const list = suggested
+          .map((r, i) => `${i + 1}. **${r.title}** (${r.timeMinutes} min)`)
+          .join("\n");
         const ingTxt = ing.length ? ` con ${ing.join(", ")}` : "";
-        pushAssistant(`Recordando lo que mencionaste${ingTxt}, de tus recetas guardadas te recomiendo:\n\n${list}\n\nDime "guíame con la primera" y empezamos.`);
+        pushAssistant(
+          `Recordando lo que mencionaste${ingTxt}, de tus recetas guardadas te recomiendo:\n\n${list}\n\nDime "guíame con la primera" y empezamos.`,
+        );
       } else {
-        pushAssistant(`Anoté: ${ing.join(", ") || "ingredientes"}. No tengo una receta guardada exacta, pero podrías hacer una **tortilla rápida** o una **ensalada fresca**. ¿Quieres que te guíe paso a paso?`);
+        pushAssistant(
+          `Anoté: ${ing.join(", ") || "ingredientes"}. No tengo una receta guardada exacta, pero podrías hacer una **tortilla rápida** o una **ensalada fresca**. ¿Quieres que te guíe paso a paso?`,
+        );
       }
       return;
     }
@@ -297,11 +381,17 @@ function ChefPage() {
     setMemory((m) => ({ ...m, mentionedIngredients: mergedIngredients, lastIntent: "answer" }));
     if (memory.activeRecipeId) {
       const recipe = recipes.find((r) => r.id === memory.activeRecipeId);
-      pushAssistant(`Estamos cocinando **${recipe?.title}**. Si tienes dudas sobre el paso actual, pregúntame, o dime "siguiente" para continuar.`);
+      pushAssistant(
+        `Estamos cocinando **${recipe?.title}**. Si tienes dudas sobre el paso actual, pregúntame, o dime "siguiente" para continuar.`,
+      );
     } else if (memory.suggestedRecipeIds.length > 0) {
-      pushAssistant(`Te propuse algunas recetas arriba. ¿Quieres que te guíe en una? Puedes decir "la primera" o el nombre.`);
+      pushAssistant(
+        `Te propuse algunas recetas arriba. ¿Quieres que te guíe en una? Puedes decir "la primera" o el nombre.`,
+      );
     } else {
-      pushAssistant(`Cuéntame qué ingredientes tienes o pídeme que te guíe en una receta guardada. Tienes ${recipes.length} guardadas.`);
+      pushAssistant(
+        `Cuéntame qué ingredientes tienes o pídeme que te guíe en una receta guardada. Tienes ${recipes.length} guardadas.`,
+      );
     }
   }
 
@@ -366,9 +456,7 @@ function ChefPage() {
     if (!text && !image && !attachedRecipe) return;
     const currentImage = image;
     const currentRecipe = attachedRecipe;
-    const userMsgContent =
-      text ||
-      (currentImage ? "📎 Adjunté una imagen" : "");
+    const userMsgContent = text || (currentImage ? "📎 Adjunté una imagen" : "");
     // flushSync so the user bubble paints BEFORE the async LLM call starts —
     // otherwise React can batch these updates with post-await ones and the
     // message appears delayed on slower devices / mobile keyboards.
@@ -438,7 +526,10 @@ function ChefPage() {
   }
 
   function removeIngredient(w: string) {
-    setMemory((m) => ({ ...m, mentionedIngredients: m.mentionedIngredients.filter((x) => x !== w) }));
+    setMemory((m) => ({
+      ...m,
+      mentionedIngredients: m.mentionedIngredients.filter((x) => x !== w),
+    }));
   }
 
   function clearActive() {
@@ -450,7 +541,9 @@ function ChefPage() {
   const showName = !isAuthenticated || (!profileLoading && !!firstName);
   const namePart = showName && firstName ? `, ${firstName}` : "";
   const welcomeTitle = `¿Qué cocinamos${namePart || " hoy"}?`;
-  const activeRecipe = memory.activeRecipeId ? recipes.find((r) => r.id === memory.activeRecipeId) : null;
+  const activeRecipe = memory.activeRecipeId
+    ? recipes.find((r) => r.id === memory.activeRecipeId)
+    : null;
   const activeSteps = activeRecipe ? getSteps(activeRecipe) : [];
 
   // ---- Kiko por voz (ElevenLabs). Las transcripciones viven solo en el
@@ -504,13 +597,13 @@ function ChefPage() {
 
   const showMic = input.trim().length === 0 && !image && !attachedRecipe;
 
-
-
   return (
     <div className="mx-auto flex h-full min-h-0 w-full max-w-4xl flex-col overflow-hidden px-0 md:h-dvh md:px-4 md:py-6">
       <section className="flex min-h-0 flex-1 flex-col rounded-none border-border/60 bg-card/30 shadow-sm md:rounded-3xl md:border">
         {/* Header */}
-        <header className={`flex shrink-0 items-center gap-2 border-b border-border/60 bg-background/80 px-3 py-3 backdrop-blur transition-all duration-200 md:gap-3 md:bg-transparent md:px-6 md:py-4 md:backdrop-blur-none ${keyboardOpen ? "max-md:hidden" : ""}`}>
+        <header
+          className={`flex shrink-0 items-center gap-2 border-b border-border/60 bg-background/80 px-3 py-3 backdrop-blur transition-all duration-200 md:gap-3 md:bg-transparent md:px-6 md:py-4 md:backdrop-blur-none ${keyboardOpen ? "max-md:hidden" : ""}`}
+        >
           <button
             type="button"
             aria-label="Volver"
@@ -530,7 +623,9 @@ function ChefPage() {
               <ChefHat className="h-5 w-5" />
             </span>
             <div className="min-w-0 flex-1">
-              <h1 className="truncate font-display text-lg font-semibold leading-tight md:text-2xl">Kiko</h1>
+              <h1 className="truncate font-display text-lg font-semibold leading-tight md:text-2xl">
+                Kiko
+              </h1>
               <p className="truncate text-[11px] font-medium uppercase tracking-wider text-[color:var(--ochre)] md:text-sm">
                 Asistente de cocina
               </p>
@@ -604,7 +699,10 @@ function ChefPage() {
         >
           {empty ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-5 px-2 text-center">
-              <div className="transition-opacity duration-200" style={{ opacity: isAuthenticated && profileLoading ? 0.6 : 1 }}>
+              <div
+                className="transition-opacity duration-200"
+                style={{ opacity: isAuthenticated && profileLoading ? 0.6 : 1 }}
+              >
                 <h2 className="font-display text-2xl font-semibold md:text-3xl">{welcomeTitle}</h2>
                 <p className="mt-2 max-w-md text-sm text-muted-foreground">
                   Tu sous-chef digital, listo para ayudarte.
@@ -641,7 +739,15 @@ function ChefPage() {
                     />
                   );
                 }
-                return <Bubble key={m.id} role={m.role} content={m.content} attachedRecipe={m.attachedRecipe} voice={m.voice} />;
+                return (
+                  <Bubble
+                    key={m.id}
+                    role={m.role}
+                    content={m.content}
+                    attachedRecipe={m.attachedRecipe}
+                    voice={m.voice}
+                  />
+                );
               })}
               {thinking && <Bubble role="assistant" content="…" thinking />}
             </div>
@@ -706,7 +812,6 @@ function ChefPage() {
           />
         ) : (
           <div className="relative m-3 shrink-0 rounded-3xl border border-border bg-background p-2 shadow-sm">
-
             {(image || attachedRecipe) && (
               <div className="flex flex-wrap items-center gap-2 px-2 pb-2 pt-1">
                 {image && (
@@ -803,7 +908,6 @@ function ChefPage() {
                   <Send className="h-4 w-4" />
                 </button>
               )}
-
             </div>
           </div>
         )}
@@ -816,7 +920,6 @@ function ChefPage() {
       />
       <KikoVoicePaywallModal open={paywallOpen} onOpenChange={setPaywallOpen} />
     </div>
-
   );
 }
 
@@ -834,7 +937,6 @@ function Bubble({
   /** Message came from a live voice transcript. */
   voice?: boolean;
 }) {
-
   const isUser = role === "user";
   const hasText = !!content;
   return (
@@ -850,13 +952,21 @@ function Bubble({
         {(hasText || thinking) && (
           <div
             className={`whitespace-pre-wrap rounded-3xl px-4 py-3 text-sm leading-relaxed ${
-              isUser ? "bg-[color:var(--ochre)]/25 text-foreground" : "bg-card text-foreground border border-border/50"
+              isUser
+                ? "bg-[color:var(--ochre)]/25 text-foreground"
+                : "bg-card text-foreground border border-border/50"
             } ${!isUser && !thinking ? "origin-top-left animate-in fade-in-0 zoom-in-95 duration-300 ease-out" : ""}`}
           >
             {thinking ? (
               <TypingDots />
             ) : (
-              <span className={!isUser ? "inline-block animate-in fade-in-0 duration-500 [animation-delay:180ms] fill-mode-backwards" : ""}>
+              <span
+                className={
+                  !isUser
+                    ? "inline-block animate-in fade-in-0 duration-500 [animation-delay:180ms] fill-mode-backwards"
+                    : ""
+                }
+              >
                 {voice && (
                   <Mic
                     className="mr-1.5 inline h-3 w-3 -translate-y-px opacity-60"
@@ -866,7 +976,6 @@ function Bubble({
                 {renderMarkdownLite(content)}
               </span>
             )}
-
           </div>
         )}
         {attachedRecipe && <ChatRecipeAttachmentCard attached={attachedRecipe} />}
@@ -904,10 +1013,14 @@ function WizardCard({
     <div className="rounded-3xl border border-border bg-background p-5">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className="text-3xl" aria-hidden>{recipe.emoji}</span>
+          <span className="text-3xl" aria-hidden>
+            {recipe.emoji}
+          </span>
           <div>
             <h3 className="font-display text-lg font-semibold">{recipe.title}</h3>
-            <p className="text-xs text-muted-foreground">{recipe.category} · {recipe.timeMinutes} min</p>
+            <p className="text-xs text-muted-foreground">
+              {recipe.category} · {recipe.timeMinutes} min
+            </p>
           </div>
         </div>
         <span className="rounded-full bg-card px-3 py-1 text-xs font-medium">{progress}%</span>
@@ -925,7 +1038,9 @@ function WizardCard({
               <button
                 onClick={() => onToggle(i)}
                 className={`flex w-full items-start gap-3 rounded-2xl border p-3 text-left text-sm transition ${
-                  isDone ? "border-primary/30 bg-primary/5 text-foreground/60 line-through" : "border-border bg-card hover:border-primary/40"
+                  isDone
+                    ? "border-primary/30 bg-primary/5 text-foreground/60 line-through"
+                    : "border-border bg-card hover:border-primary/40"
                 }`}
               >
                 {isDone ? (

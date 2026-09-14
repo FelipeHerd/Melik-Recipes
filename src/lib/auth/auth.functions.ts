@@ -36,7 +36,11 @@ export const login = createServerFn({ method: "POST" })
     const ok = await comparePassword(data.password, user.password_hash);
     if (!ok) throw new Error("Invalid login credentials");
 
-    const token = signAccessToken({ sub: user.id, email: user.email, tokenVersion: user.token_version });
+    const token = signAccessToken({
+      sub: user.id,
+      email: user.email,
+      tokenVersion: user.token_version,
+    });
     return {
       token,
       userId: user.id,
@@ -164,7 +168,11 @@ export const resetPassword = createServerFn({ method: "POST" })
       .select(["id", "user_id", "expires_at", "used_at"])
       .where("token", "=", data.token)
       .executeTakeFirst();
-    if (!row || row.used_at || new Date(row.expires_at as unknown as string).getTime() < Date.now()) {
+    if (
+      !row ||
+      row.used_at ||
+      new Date(row.expires_at as unknown as string).getTime() < Date.now()
+    ) {
       throw new Error("Token has expired or is invalid");
     }
 
@@ -177,7 +185,11 @@ export const resetPassword = createServerFn({ method: "POST" })
         .set((eb) => ({ password_hash: passwordHash, token_version: eb("token_version", "+", 1) }))
         .where("id", "=", row.user_id)
         .execute();
-      await trx.updateTable("password_reset_tokens").set({ used_at: new Date() }).where("id", "=", row.id).execute();
+      await trx
+        .updateTable("password_reset_tokens")
+        .set({ used_at: new Date() })
+        .where("id", "=", row.id)
+        .execute();
     });
     return { ok: true };
   });
@@ -194,6 +206,10 @@ export const changePassword = createServerFn({ method: "POST" })
     const { db } = await import("@/lib/db.server");
     const { hashPassword } = await import("@/lib/auth/password.server");
     const passwordHash = await hashPassword(data.password);
-    await db.updateTable("users").set({ password_hash: passwordHash }).where("id", "=", context.userId).execute();
+    await db
+      .updateTable("users")
+      .set({ password_hash: passwordHash })
+      .where("id", "=", context.userId)
+      .execute();
     return { ok: true };
   });

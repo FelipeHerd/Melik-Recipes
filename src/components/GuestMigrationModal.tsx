@@ -53,8 +53,12 @@ export function GuestMigrationModal() {
           Importar tus recetas
         </h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Detectamos <strong>{count} {count === 1 ? "receta guardada" : "recetas guardadas"}</strong> como invitado en este dispositivo.
-          ¿Quieres importarlas a tu cuenta para tenerlas siempre disponibles?
+          Detectamos{" "}
+          <strong>
+            {count} {count === 1 ? "receta guardada" : "recetas guardadas"}
+          </strong>{" "}
+          como invitado en este dispositivo. ¿Quieres importarlas a tu cuenta para tenerlas siempre
+          disponibles?
         </p>
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <button

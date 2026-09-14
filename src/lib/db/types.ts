@@ -7,7 +7,11 @@ export type AppRole = "admin" | "user" | "dev";
 // (that double-wraps the type and breaks Select-type inference).
 type GeneratedTimestamp = ColumnType<Date, Date | string | undefined, Date | string>;
 type RequiredTimestamp = ColumnType<Date, Date | string, Date | string>;
-type NullableTimestamp = ColumnType<Date | null, Date | string | null | undefined, Date | string | null>;
+type NullableTimestamp = ColumnType<
+  Date | null,
+  Date | string | null | undefined,
+  Date | string | null
+>;
 type NullableDate = ColumnType<string | null, string | null | undefined, string | null>;
 
 // node-postgres does NOT auto-serialize JS values for jsonb columns — a
