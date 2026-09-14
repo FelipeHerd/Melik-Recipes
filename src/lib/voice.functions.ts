@@ -3,7 +3,7 @@
 // to the browser. Voice transcripts are NOT persisted: the /chef thread
 // stays local to the session by design.
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireAuth } from "@/lib/auth/require-auth";
 import { z } from "zod";
 
 export type VoiceQuotaDTO = {
@@ -14,7 +14,7 @@ export type VoiceQuotaDTO = {
 };
 
 export const getVoiceQuota = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .handler(async ({ context }): Promise<VoiceQuotaDTO> => {
     const { readVoiceQuota } = await import("./voice.server");
     return readVoiceQuota(context.userId);
@@ -37,7 +37,7 @@ export type VoiceSessionDTO = {
 };
 
 export const getElevenLabsToken = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((input: unknown) => tokenSchema.parse(input))
   .handler(async ({ data, context }): Promise<VoiceSessionDTO> => {
     const { readVoiceQuota, requestConversationToken } = await import("./voice.server");
@@ -70,7 +70,7 @@ export const getElevenLabsToken = createServerFn({ method: "POST" })
 const usageSchema = z.object({ seconds: z.number().int().min(0).max(120) });
 
 export const logVoiceUsage = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((input: unknown) => usageSchema.parse(input))
   .handler(async ({ data, context }): Promise<VoiceQuotaDTO> => {
     const { addVoiceUsage } = await import("./voice.server");

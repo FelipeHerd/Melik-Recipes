@@ -6,7 +6,11 @@ import { toast } from "sonner";
 import { showError } from "@/lib/errors/toast";
 import { QueryErrorFallback } from "@/components/QueryErrorFallback";
 import { Loader2, Clock, Users } from "lucide-react";
-import { listCommunityRecipes, saveCommunityRecipe, type CommunityRecipe } from "@/lib/community.functions";
+import {
+  listCommunityRecipes,
+  saveCommunityRecipe,
+  type CommunityRecipe,
+} from "@/lib/community.functions";
 import { ModalFallback } from "@/components/ModalFallback";
 import { CommunityFeedSkeleton } from "@/components/CommunityFeedSkeleton";
 
@@ -32,10 +36,7 @@ export function CommunityFeed() {
     staleTime: 30_000,
   });
 
-  const items = useMemo(
-    () => query.data?.pages.flatMap((p) => p.items) ?? [],
-    [query.data],
-  );
+  const items = useMemo(() => query.data?.pages.flatMap((p) => p.items) ?? [], [query.data]);
 
   const sentinelRef = useInfiniteSentinel(
     () => {
@@ -57,7 +58,6 @@ export function CommunityFeed() {
   if (query.isPending) {
     return <CommunityFeedSkeleton />;
   }
-
 
   if (query.isError) {
     return (
@@ -135,7 +135,9 @@ function CommunityCard({ recipe, onOpen }: { recipe: CommunityRecipe; onOpen: ()
         aria-label={`Ver receta ${recipe.title}`}
         className="relative grid aspect-[4/3] w-full place-items-center overflow-hidden bg-gradient-to-br from-primary/15 to-primary/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <span className="text-6xl" aria-hidden>{recipe.emoji}</span>
+        <span className="text-6xl" aria-hidden>
+          {recipe.emoji}
+        </span>
         <span className="absolute left-3 top-3 rounded-full bg-background/80 px-2.5 py-1 text-xs font-medium text-foreground/80 backdrop-blur">
           {recipe.category}
         </span>

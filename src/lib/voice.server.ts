@@ -1,8 +1,8 @@
 // Server-only helpers for the Kiko voice assistant (ElevenLabs Agents).
 // Handles the daily-quota bookkeeping and the conversation-token request.
 // Import via dynamic `await import()` inside a server-function handler.
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { hasActivePremium, isAdminOrDev } from "@/lib/premium.server";
+import { db } from "@/lib/db.server";
+import { hasActivePremium, isAdminOrDev } from "@/lib/auth/authorize.server";
 
 /** Daily voice-call budget, in seconds. */
 export const VOICE_LIMIT_FREE_SECONDS = 60;
@@ -46,11 +46,11 @@ async function resolveLimit(userId: string): Promise<{ limitSeconds: number; isP
  */
 export async function readVoiceQuota(userId: string): Promise<VoiceQuota> {
   const { limitSeconds, isPremium } = await resolveLimit(userId);
-  const { data } = await supabaseAdmin
-    .from("profiles")
-    .select("voice_seconds_used_today, voice_usage_date")
-    .eq("id", userId)
-    .maybeSingle();
+  const data = await db
+    .selectFrom("profiles")
+    .select(["voice_seconds_used_today", "voice_usage_date"])
+    .where("id", "=", userId)
+    .executeTakeFirst();
 
   const today = businessToday();
   const sameDay = (data?.voice_usage_date ?? null) === today;
@@ -70,10 +70,11 @@ export async function addVoiceUsage(userId: string, seconds: number): Promise<Vo
   const delta = Math.min(Math.max(0, Math.round(seconds)), MAX_SECONDS_PER_PING);
   const usedSeconds = Math.min(current.usedSeconds + delta, current.limitSeconds);
 
-  await supabaseAdmin
-    .from("profiles")
-    .update({ voice_seconds_used_today: usedSeconds, voice_usage_date: businessToday() })
-    .eq("id", userId);
+  await db
+    .updateTable("profiles")
+    .set({ voice_seconds_used_today: usedSeconds, voice_usage_date: businessToday() })
+    .where("id", "=", userId)
+    .execute();
 
   return {
     ...current,

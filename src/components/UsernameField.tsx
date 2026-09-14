@@ -5,10 +5,15 @@ import { checkUsernameAvailable, isValidUsername } from "@/lib/username.function
 
 export type UsernameStatus = "idle" | "invalid" | "checking" | "available" | "taken";
 
+// eslint-disable-next-line react-refresh/only-export-components -- shared helper colocated with the component that uses it
 export function normalizeUsername(raw: string): string {
-  return raw.toLowerCase().replace(/[^a-z0-9_.]/g, "").slice(0, 20);
+  return raw
+    .toLowerCase()
+    .replace(/[^a-z0-9_.]/g, "")
+    .slice(0, 20);
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- shared hook colocated with the component that uses it
 export function useUsernameAvailability(username: string) {
   const [debounced, setDebounced] = useState(username);
   useEffect(() => {
@@ -90,9 +95,13 @@ export function UsernameField({
           className="h-full flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
         />
         <span className="grid h-6 w-6 place-items-center">
-          {status === "checking" && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+          {status === "checking" && (
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          )}
           {status === "available" && <Check className="h-4 w-4 text-green-600" />}
-          {(status === "taken" || status === "invalid") && value && <X className="h-4 w-4 text-destructive" />}
+          {(status === "taken" || status === "invalid") && value && (
+            <X className="h-4 w-4 text-destructive" />
+          )}
         </span>
       </div>
       <p aria-live="polite" className="min-h-[1.15rem] text-xs">
@@ -104,14 +113,17 @@ export function UsernameField({
         )}
         {status === "invalid" && value && (
           <span className="text-destructive">
-            Usa 3–20 caracteres: minúsculas, números, punto o guion bajo (sin punto al inicio/fin ni dobles)
+            Usa 3–20 caracteres: minúsculas, números, punto o guion bajo (sin punto al inicio/fin ni
+            dobles)
           </span>
         )}
         {status === "checking" && (
           <span className="text-muted-foreground">Comprobando disponibilidad…</span>
         )}
         {status === "idle" && !value && (
-          <span className="text-muted-foreground">Minúsculas, números, punto y guion bajo (3–20)</span>
+          <span className="text-muted-foreground">
+            Minúsculas, números, punto y guion bajo (3–20)
+          </span>
         )}
       </p>
     </div>

@@ -1,21 +1,18 @@
 import { useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Ban, Clock, Copy, Crown, ExternalLink, Shield, UserCog } from "lucide-react";
+import { Ban, Clock, Crown, ExternalLink, Shield, UserCog } from "lucide-react";
 import { toast } from "sonner";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   setKikoBlock,
   grantTrial,
   setUserRole,
-  generateImpersonationLink,
+  generateImpersonationToken,
   type AdminCrmRow,
 } from "@/lib/admin-crm.functions";
 import { showError } from "@/lib/errors/toast";
+import { setSession } from "@/lib/auth/session-store";
 
 function fmtDate(iso: string | null): string {
   if (!iso) return "—";
@@ -93,8 +90,8 @@ export function UserActionsDrawer({
   onClose: () => void;
 }) {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [customDate, setCustomDate] = useState("");
-  const [linkResult, setLinkResult] = useState<{ actionLink: string; email: string } | null>(null);
 
   const invalidateAll = () => {
     qc.invalidateQueries({ queryKey: ["admin", "crm"] });
@@ -102,8 +99,7 @@ export function UserActionsDrawer({
   };
 
   const kikoMut = useMutation({
-    mutationFn: (until: string | null) =>
-      setKikoBlock({ data: { userId: row!.userId, until } }),
+    mutationFn: (until: string | null) => setKikoBlock({ data: { userId: row!.userId, until } }),
     onSuccess: (_r, until) => {
       toast.success(until ? "Kiko pausado" : "Kiko reactivado");
       invalidateAll();
@@ -136,24 +132,28 @@ export function UserActionsDrawer({
   });
 
   const impersonateMut = useMutation({
-    mutationFn: () => generateImpersonationLink({ data: { userId: row!.userId } }),
+    mutationFn: () => generateImpersonationToken({ data: { userId: row!.userId } }),
     onSuccess: (r) => {
-      setLinkResult(r);
-      toast.success("Enlace generado. Cópialo con cuidado.");
+      // Swap this tab's session to the target user directly — there's no
+      // magic-link email step in this architecture. The admin will need to
+      // log back in as themselves afterward.
+      setSession(r);
+      qc.clear();
+      toast.success(`Sesión cambiada a ${r.email}`);
+      onClose();
+      navigate({ to: "/", replace: true });
     },
     onError: (e) => showError(e),
   });
 
   const open = row !== null;
-  const isBlocked =
-    !!row?.kikoBlockedUntil && new Date(row.kikoBlockedUntil) > new Date();
+  const isBlocked = !!row?.kikoBlockedUntil && new Date(row.kikoBlockedUntil) > new Date();
 
   return (
     <Sheet
       open={open}
       onOpenChange={(v) => {
         if (!v) {
-          setLinkResult(null);
           setCustomDate("");
           onClose();
         }
@@ -166,7 +166,9 @@ export function UserActionsDrawer({
         {row && (
           <>
             <SheetHeader className="text-left">
-              <SheetTitle className="text-zinc-100">Acciones sobre @{row.username ?? "usuario"}</SheetTitle>
+              <SheetTitle className="text-zinc-100">
+                Acciones sobre @{row.username ?? "usuario"}
+              </SheetTitle>
               <div className="mt-2 flex items-center gap-3">
                 <span className="grid h-12 w-12 overflow-hidden rounded-full bg-zinc-800 text-sm">
                   {row.avatarUrl ? (
@@ -187,13 +189,20 @@ export function UserActionsDrawer({
             <div className="mt-6 space-y-4">
               <Section title="Acceso a Kiko" icon={Ban}>
                 <p className="text-xs text-zinc-500">
-                  Estado actual: {isBlocked ? `bloqueado hasta ${fmtDate(row.kikoBlockedUntil)}` : "activo"}
+                  Estado actual:{" "}
+                  {isBlocked ? `bloqueado hasta ${fmtDate(row.kikoBlockedUntil)}` : "activo"}
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  <ActionButton onClick={() => kikoMut.mutate(daysFromNow(1))} disabled={kikoMut.isPending}>
+                  <ActionButton
+                    onClick={() => kikoMut.mutate(daysFromNow(1))}
+                    disabled={kikoMut.isPending}
+                  >
                     24 horas
                   </ActionButton>
-                  <ActionButton onClick={() => kikoMut.mutate(daysFromNow(7))} disabled={kikoMut.isPending}>
+                  <ActionButton
+                    onClick={() => kikoMut.mutate(daysFromNow(7))}
+                    disabled={kikoMut.isPending}
+                  >
                     7 días
                   </ActionButton>
                   {isBlocked && (
@@ -237,8 +246,8 @@ export function UserActionsDrawer({
                 </p>
                 <p className="text-xs text-zinc-400">
                   Meses pagados totales:{" "}
-                  <span className="font-semibold text-zinc-200">{row.paidMonthsTotal}</span>{" "}
-                  · Desbloqueos ganados:{" "}
+                  <span className="font-semibold text-zinc-200">{row.paidMonthsTotal}</span> ·
+                  Desbloqueos ganados:{" "}
                   <span className="font-semibold text-zinc-200">
                     {row.paidMonthsTotal >= 1 ? Math.floor((row.paidMonthsTotal - 1) / 6) + 1 : 0}
                   </span>
@@ -294,7 +303,10 @@ export function UserActionsDrawer({
                         }`}
                       >
                         {r === "admin" ? (
-                          <><Shield className="mr-1 inline h-3 w-3" />admin</>
+                          <>
+                            <Shield className="mr-1 inline h-3 w-3" />
+                            admin
+                          </>
                         ) : r === "dev" ? (
                           <>dev</>
                         ) : (
@@ -332,44 +344,16 @@ export function UserActionsDrawer({
 
               <Section title="Impersonación" icon={ExternalLink}>
                 <p className="text-xs text-zinc-500">
-                  Genera un enlace mágico de un solo uso para entrar como este usuario.
+                  Cambia esta pestaña a la sesión de este usuario por 5 minutos. Deberás volver a
+                  iniciar sesión como administrador después.
                 </p>
                 <ActionButton
                   variant="danger"
                   onClick={() => impersonateMut.mutate(undefined)}
                   disabled={impersonateMut.isPending}
                 >
-                  Generar enlace mágico
+                  Entrar como este usuario
                 </ActionButton>
-                {linkResult && (
-                  <div className="mt-2 space-y-2 rounded-xl border border-zinc-800 bg-zinc-950 p-3">
-                    <p className="text-[11px] text-zinc-500">Para: {linkResult.email}</p>
-                    <textarea
-                      readOnly
-                      value={linkResult.actionLink}
-                      className="h-20 w-full resize-none rounded-lg bg-zinc-900 p-2 font-mono text-[11px] text-zinc-200 focus:outline-none"
-                    />
-                    <div className="flex gap-2">
-                      <ActionButton
-                        onClick={() => {
-                          void navigator.clipboard.writeText(linkResult.actionLink);
-                          toast.success("Enlace copiado");
-                        }}
-                      >
-                        <Copy className="mr-1 inline h-3 w-3" />
-                        Copiar
-                      </ActionButton>
-                      <a
-                        href={linkResult.actionLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="rounded-xl bg-zinc-800/60 px-3 py-2 text-xs font-medium text-zinc-200 hover:bg-zinc-800"
-                      >
-                        Abrir en pestaña nueva
-                      </a>
-                    </div>
-                  </div>
-                )}
               </Section>
             </div>
           </>

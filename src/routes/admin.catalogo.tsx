@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Suspense, lazy, useMemo, useState } from "react";
 import { Croissant, Lock, Pencil, Plus, Trash2, Loader2 } from "lucide-react";
@@ -23,17 +23,13 @@ import { assertAdminOrRedirect } from "@/lib/admin-guard";
 
 export const Route = createFileRoute("/admin/catalogo")({
   beforeLoad: async ({ context }) => {
-    await assertAdminOrRedirect((context as { queryClient?: any })?.queryClient);
+    await assertAdminOrRedirect((context as { queryClient?: QueryClient })?.queryClient);
   },
   head: () => ({
-    meta: [
-      { title: "Catálogo Melik — Panel" },
-      { name: "robots", content: "noindex,nofollow" },
-    ],
+    meta: [{ title: "Catálogo Melik — Panel" }, { name: "robots", content: "noindex,nofollow" }],
   }),
   component: AdminCatalogPage,
 });
-
 
 function AdminCatalogPage() {
   const listFn = useServerFn(adminListOfficialRecipes);
@@ -52,7 +48,7 @@ function AdminCatalogPage() {
   const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const editingRow = useMemo(
-    () => (editingId ? rows.find((r) => r.id === editingId) ?? null : null),
+    () => (editingId ? (rows.find((r) => r.id === editingId) ?? null) : null),
     [editingId, rows],
   );
 
@@ -143,9 +139,7 @@ function AdminCatalogPage() {
     onError: (err) => showError(err, "APP-RCP-004"),
   });
 
-  const editingAsRecipe: Recipe | undefined = editingRow
-    ? adminRowToRecipe(editingRow)
-    : undefined;
+  const editingAsRecipe: Recipe | undefined = editingRow ? adminRowToRecipe(editingRow) : undefined;
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-10">

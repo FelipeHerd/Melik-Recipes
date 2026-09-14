@@ -6,10 +6,7 @@ import { useEffect, useRef } from "react";
  */
 export function useInfiniteSentinel(
   onIntersect: () => void,
-  {
-    enabled = true,
-    rootMargin = "600px",
-  }: { enabled?: boolean; rootMargin?: string } = {},
+  { enabled = true, rootMargin = "600px" }: { enabled?: boolean; rootMargin?: string } = {},
 ) {
   const ref = useRef<HTMLDivElement | null>(null);
   const cbRef = useRef(onIntersect);

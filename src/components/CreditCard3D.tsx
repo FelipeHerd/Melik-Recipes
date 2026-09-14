@@ -64,8 +64,7 @@ export function CreditCard3D({
             <div
               className="h-8 w-11 rounded-md"
               style={{
-                background:
-                  "linear-gradient(135deg, #f7d68a 0%, #d4a24a 45%, #a67a2a 100%)",
+                background: "linear-gradient(135deg, #f7d68a 0%, #d4a24a 45%, #a67a2a 100%)",
                 boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.25)",
               }}
             >

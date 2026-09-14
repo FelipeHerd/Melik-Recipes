@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, type QueryClient } from "@tanstack/react-query";
 import { Bell, History } from "lucide-react";
 import { NotificationComposer } from "@/components/admin/NotificationComposer";
 import { listNotificationHistory } from "@/lib/admin-notifications.functions";
@@ -8,7 +8,7 @@ import { assertAdminOrRedirect } from "@/lib/admin-guard";
 
 export const Route = createFileRoute("/admin/notificaciones")({
   beforeLoad: async ({ context }) => {
-    await assertAdminOrRedirect((context as { queryClient?: any })?.queryClient);
+    await assertAdminOrRedirect((context as { queryClient?: QueryClient })?.queryClient);
   },
   head: () => ({
     meta: [
@@ -27,7 +27,6 @@ export const Route = createFileRoute("/admin/notificaciones")({
   }),
   component: AdminNotifications,
 });
-
 
 function AdminNotifications() {
   const history = useQuery({
@@ -108,12 +107,8 @@ function AdminNotifications() {
                       </td>
                       <td className="px-2 py-2 text-zinc-400">{r.type ?? "—"}</td>
                       <td className="px-2 py-2 text-right">{r.targetsCount}</td>
-                      <td className="px-2 py-2 text-right text-emerald-400">
-                        {r.inserted}
-                      </td>
-                      <td className="px-2 py-2 text-right text-red-400">
-                        {r.failedCount || ""}
-                      </td>
+                      <td className="px-2 py-2 text-right text-emerald-400">{r.inserted}</td>
+                      <td className="px-2 py-2 text-right text-red-400">{r.failedCount || ""}</td>
                       <td className={`px-2 py-2 ${status}`}>{r.status}</td>
                     </tr>
                   );

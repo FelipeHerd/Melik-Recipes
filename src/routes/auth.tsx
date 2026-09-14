@@ -2,10 +2,13 @@ import { createFileRoute, Link, useNavigate, useRouter, useSearch } from "@tanst
 import { Suspense, lazy, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { login } from "@/lib/auth/auth.functions";
+import { setSession } from "@/lib/auth/session-store";
 import { AuthField, authInputClass } from "@/components/AuthField";
 import { AuthPageSkeleton, AuthSkeleton } from "@/components/AuthSkeleton";
-import melikLogo from "@/assets/melik-logo.png.asset.json";
+// Served straight from public/ (see CLAUDE.md) — the Lovable-hosted asset
+// manifest this used to import from is gone along with Lovable's CDN.
+const melikLogo = { url: "/melik-logo.png" };
 
 // Only allow relative in-app paths as redirect target to prevent open-redirect abuse.
 function safeRedirect(v: unknown): string {
@@ -18,15 +21,22 @@ const importSignUpForm = () => import("@/components/SignUpForm");
 const SignUpForm = lazy(importSignUpForm);
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (search: Record<string, unknown>): { redirect?: string } => ({
     redirect: typeof search.redirect === "string" ? search.redirect : undefined,
   }),
   head: () => ({
     meta: [
       { title: "Iniciar sesión — Melik Recipes" },
-      { name: "description", content: "Inicia sesión en Melik Recipes para acceder a tu recetario personal y sincronizar tus datos." },
+      {
+        name: "description",
+        content:
+          "Inicia sesión en Melik Recipes para acceder a tu recetario personal y sincronizar tus datos.",
+      },
       { property: "og:title", content: "Iniciar sesión — Melik Recipes" },
-      { property: "og:description", content: "Accede a tu recetario personal y sincroniza tus recetas en la nube." },
+      {
+        property: "og:description",
+        content: "Accede a tu recetario personal y sincroniza tus recetas en la nube.",
+      },
       { property: "og:url", content: "https://melik-recipes.lovable.app/auth" },
     ],
     links: [
@@ -54,9 +64,18 @@ function AuthPage() {
       <div className="mx-auto max-w-md">
         <Link to="/" className="inline-flex items-center gap-2.5">
           <span className="grid h-11 w-11 place-items-center rounded-2xl bg-card overflow-hidden">
-            <img src={melikLogo.url} alt="Melik Recipes" decoding="async" className="h-10 w-10 object-contain" />
+            <img
+              src={melikLogo.url}
+              alt="Melik Recipes"
+              decoding="async"
+              className="h-10 w-10 object-contain"
+            />
           </span>
-          <span className="font-display text-xl font-semibold leading-tight">Melik<br />Recipes</span>
+          <span className="font-display text-xl font-semibold leading-tight">
+            Melik
+            <br />
+            Recipes
+          </span>
         </Link>
         <div className="mt-8 rounded-3xl border border-border bg-card/40 p-6 shadow-sm sm:p-8">
           <div className="flex rounded-2xl bg-card p-1 text-sm font-medium">
@@ -115,12 +134,15 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) {
+    try {
+      const session = await login({ data: { email, password } });
+      setSession(session);
+    } catch {
+      setLoading(false);
       setError("Correo o contraseña incorrectos");
       return;
     }
+    setLoading(false);
     toast.success("¡Bienvenido de vuelta!");
     await router.invalidate();
     navigate({ to: redirectTo });
@@ -148,10 +170,15 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
           className={authInputClass}
         />
       </AuthField>
-      <Link to="/auth/reset" className="text-right text-xs font-medium text-primary hover:underline">
+      <Link
+        to="/auth/reset"
+        className="text-right text-xs font-medium text-primary hover:underline"
+      >
         ¿Olvidaste tu contraseña?
       </Link>
-      {error && <p className="rounded-xl bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</p>}
+      {error && (
+        <p className="rounded-xl bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</p>
+      )}
       <button
         type="submit"
         disabled={loading}

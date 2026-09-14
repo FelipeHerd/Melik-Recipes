@@ -1,15 +1,14 @@
 export const emojiByCategory: Record<string, string> = {
   "Plato principal": "🍝",
-  "Desayuno": "🥞",
-  "Entrada": "🥗",
-  "Postre": "🍰",
-  "Bebida": "🥤",
-  "Snack": "🥨",
-  "Pan": "🍞",
+  Desayuno: "🥞",
+  Entrada: "🥗",
+  Postre: "🍰",
+  Bebida: "🥤",
+  Snack: "🥨",
+  Pan: "🍞",
 };
 
 export const STANDARD_CATEGORIES = Object.keys(emojiByCategory);
-
 
 export function isCustomCategory(category: string | null | undefined): boolean {
   if (!category) return false;

@@ -53,10 +53,7 @@ export function formatRecipeForLLM(recipe: RecipeForContext): string {
   return out;
 }
 
-export function buildUserPromptWithRecipe(
-  userText: string,
-  recipe: RecipeForContext,
-): string {
+export function buildUserPromptWithRecipe(userText: string, recipe: RecipeForContext): string {
   const md = formatRecipeForLLM(recipe);
   const question = userText.trim() || "¿Puedes revisarla y darme consejos?";
   return `[Contexto de receta adjunta: "${recipe.title}"]\n${md}\n[Fin del contexto]\n\nPregunta del usuario: ${question}`;

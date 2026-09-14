@@ -16,7 +16,7 @@ import { PageFallback } from "@/components/PageFallback";
 import { ModalFallback } from "@/components/ModalFallback";
 
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
+import { reportClientError } from "../lib/error-reporting";
 import { RecipesProvider } from "@/lib/recipes-context";
 import { UserMenu, SidebarUsername } from "@/components/UserMenu";
 import { GuestMigrationModal } from "@/components/GuestMigrationModal";
@@ -32,8 +32,10 @@ const DiscoverSidebarSection = lazy(() =>
     default: m.DiscoverSidebarSection,
   })),
 );
-import melikLogo from "@/assets/melik-logo.png.asset.json";
-import melikBakeryLogo from "@/assets/melik-bakery-logo.png.asset.json";
+// Served straight from public/ (see CLAUDE.md) — the Lovable-hosted asset
+// manifests these used to import from are gone along with Lovable's CDN.
+const melikLogo = { url: "/melik-logo.png" };
+const melikBakeryLogo = { url: "/melik-bakery-logo.png" };
 
 function NotFoundComponent() {
   return (
@@ -41,7 +43,10 @@ function NotFoundComponent() {
       <div className="max-w-md text-center">
         <h1 className="font-display text-7xl font-bold text-foreground">404</h1>
         <p className="mt-4 text-muted-foreground">Esta página no existe.</p>
-        <Link to="/" className="mt-6 inline-flex rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground">
+        <Link
+          to="/"
+          className="mt-6 inline-flex rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground"
+        >
           Volver al inicio
         </Link>
       </div>
@@ -52,7 +57,7 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
   useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
+    reportClientError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
   return (
     <div className="flex min-h-dvh items-center justify-center bg-background px-4">
@@ -60,7 +65,10 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         <h1 className="font-display text-xl font-semibold">Algo salió mal</h1>
         <p className="mt-2 text-sm text-muted-foreground">Intenta de nuevo en un momento.</p>
         <button
-          onClick={() => { router.invalidate(); reset(); }}
+          onClick={() => {
+            router.invalidate();
+            reset();
+          }}
           className="mt-6 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground"
         >
           Reintentar
@@ -77,13 +85,30 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { name: "google-site-verification", content: "yVgtz1aHfpMU-IxoUfPyRu45ROkLRe4VXE7MqnnzF2w" },
       { title: "Melik Recipes — Tu recetario con asistente IA" },
-      { name: "description", content: "Organiza tus recetas favoritas y cocina con la ayuda de un asistente IA." },
+      {
+        name: "description",
+        content: "Organiza tus recetas favoritas y cocina con la ayuda de un asistente IA.",
+      },
       { property: "og:title", content: "Melik Recipes — Tu recetario con asistente IA" },
       { name: "twitter:title", content: "Melik Recipes — Tu recetario con asistente IA" },
-      { property: "og:description", content: "Organiza tus recetas favoritas y cocina con la ayuda de un asistente IA." },
-      { name: "twitter:description", content: "Organiza tus recetas favoritas y cocina con la ayuda de un asistente IA." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/0e6e5ea3-6f80-4cda-958d-3358547f742a" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/0e6e5ea3-6f80-4cda-958d-3358547f742a" },
+      {
+        property: "og:description",
+        content: "Organiza tus recetas favoritas y cocina con la ayuda de un asistente IA.",
+      },
+      {
+        name: "twitter:description",
+        content: "Organiza tus recetas favoritas y cocina con la ayuda de un asistente IA.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/0e6e5ea3-6f80-4cda-958d-3358547f742a",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/0e6e5ea3-6f80-4cda-958d-3358547f742a",
+      },
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:type", content: "website" },
     ],
@@ -91,8 +116,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "stylesheet", href: appCss },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Gabarito:wght@400;500;600;700&display=swap" },
-      { rel: "preload", as: "image", href: melikLogo.url, fetchPriority: "high" } as unknown as { rel: string; href: string },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Gabarito:wght@400;500;600;700&display=swap",
+      },
+      { rel: "preload", as: "image", href: melikLogo.url, fetchPriority: "high" } as unknown as {
+        rel: string;
+        href: string;
+      },
     ],
     scripts: [
       {
@@ -104,8 +135,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           url: "https://melik-recipes.lovable.app",
           applicationCategory: "Culinary & Recipe Management Application",
           inLanguage: "es",
-          description:
-            "Organiza tus recetas favoritas y cocina con la ayuda de un asistente IA.",
+          description: "Organiza tus recetas favoritas y cocina con la ayuda de un asistente IA.",
           creator: {
             "@type": "Organization",
             name: "Melik Bakery",
@@ -123,7 +153,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         }),
       },
     ],
-
   }),
   shellComponent: RootShell,
   component: RootComponent,
@@ -134,8 +163,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="es">
-      <head><HeadContent /></head>
-      <body>{children}<Scripts /></body>
+      <head>
+        <HeadContent />
+      </head>
+      <body>
+        {children}
+        <Scripts />
+      </body>
     </html>
   );
 }
@@ -160,18 +194,23 @@ function AppShell() {
   const hideShell =
     pathname.startsWith("/auth") || pathname === "/admin" || pathname.startsWith("/admin/");
 
-
   const [collapsed, setCollapsed] = useState(false);
   useEffect(() => {
     try {
       const v = window.localStorage.getItem(SIDEBAR_KEY);
       if (v === "1") setCollapsed(true);
-    } catch {}
+    } catch {
+      // localStorage may be unavailable (e.g. private browsing) — ignore
+    }
   }, []);
   const toggleCollapsed = () => {
     setCollapsed((c) => {
       const next = !c;
-      try { window.localStorage.setItem(SIDEBAR_KEY, next ? "1" : "0"); } catch {}
+      try {
+        window.localStorage.setItem(SIDEBAR_KEY, next ? "1" : "0");
+      } catch {
+        // localStorage may be unavailable (e.g. private browsing) — ignore
+      }
       return next;
     });
   };
@@ -197,7 +236,9 @@ function AppShell() {
   }`;
 
   return (
-    <div className={`bg-background text-foreground ${isMobileChatView ? "h-[100dvh] overflow-hidden flex flex-col md:block md:min-h-dvh md:h-auto md:overflow-visible" : "min-h-dvh"}`}>
+    <div
+      className={`bg-background text-foreground ${isMobileChatView ? "h-[100dvh] overflow-hidden flex flex-col md:block md:min-h-dvh md:h-auto md:overflow-visible" : "min-h-dvh"}`}
+    >
       {/* Desktop sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 z-30 hidden flex-col bg-sidebar py-7 md:flex transition-[width] duration-200 ease-out ${asideWidth} ${asidePad}`}
@@ -214,7 +255,11 @@ function AppShell() {
           aria-label={collapsed ? "Expandir menú" : "Contraer menú"}
           className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-lg text-foreground/70 hover:bg-card hover:text-foreground transition-colors z-10"
         >
-          {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+          {collapsed ? (
+            <PanelLeftOpen className="h-4 w-4" />
+          ) : (
+            <PanelLeftClose className="h-4 w-4" />
+          )}
         </button>
 
         <Link
@@ -222,13 +267,22 @@ function AppShell() {
           className={`flex items-center gap-2.5 overflow-hidden ${collapsed ? "justify-center" : ""}`}
         >
           <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-card overflow-hidden">
-            <img src={melikLogo.url} alt="Melik Recipes" width={52} height={52} fetchPriority="high" decoding="async" className="h-[52px] w-[52px] object-contain" />
+            <img
+              src={melikLogo.url}
+              alt="Melik Recipes"
+              width={52}
+              height={52}
+              fetchPriority="high"
+              decoding="async"
+              className="h-[52px] w-[52px] object-contain"
+            />
           </span>
           <span
             aria-hidden={collapsed}
             className={`font-display text-xl font-semibold leading-tight ${textReveal}`}
           >
-            Melik<br />
+            Melik
+            <br />
             Recipes
           </span>
         </Link>
@@ -245,8 +299,8 @@ function AppShell() {
                   showDescubrirSection
                     ? "flex min-h-0 flex-1 flex-col"
                     : isDescubrirItem
-                    ? "flex flex-col"
-                    : undefined
+                      ? "flex flex-col"
+                      : undefined
                 }
               >
                 <Link
@@ -256,8 +310,12 @@ function AppShell() {
                     collapsed ? "justify-center" : ""
                   } ${active ? "bg-primary text-primary-foreground" : "text-foreground/80 hover:bg-card"}`}
                 >
-                  <Icon className={`h-4 w-4 shrink-0 transition-transform duration-200 ease-out motion-reduce:transition-none ${collapsed ? "translate-x-1.5" : "translate-x-0"}`} />
-                  <span aria-hidden={collapsed} className={textReveal}>{item.label}</span>
+                  <Icon
+                    className={`h-4 w-4 shrink-0 transition-transform duration-200 ease-out motion-reduce:transition-none ${collapsed ? "translate-x-1.5" : "translate-x-0"}`}
+                  />
+                  <span aria-hidden={collapsed} className={textReveal}>
+                    {item.label}
+                  </span>
                 </Link>
                 {showDescubrirSection && (
                   <Suspense fallback={null}>
@@ -312,9 +370,21 @@ function AppShell() {
         <header className="sticky top-0 z-20 flex items-center justify-between gap-2.5 border-b border-border bg-background/80 px-5 py-3 backdrop-blur md:hidden">
           <Link to="/" className="flex items-center gap-2.5">
             <span className="grid h-11 w-11 place-items-center rounded-xl bg-card overflow-hidden">
-              <img src={melikLogo.url} alt="Melik Recipes" width={40} height={40} fetchPriority="high" decoding="async" className="h-10 w-10 object-contain" />
+              <img
+                src={melikLogo.url}
+                alt="Melik Recipes"
+                width={40}
+                height={40}
+                fetchPriority="high"
+                decoding="async"
+                className="h-10 w-10 object-contain"
+              />
             </span>
-            <span className="font-display text-lg font-semibold leading-tight">Melik<br />Recipes</span>
+            <span className="font-display text-lg font-semibold leading-tight">
+              Melik
+              <br />
+              Recipes
+            </span>
           </Link>
           <div className="flex items-center gap-2">
             {isDescubrir && (
@@ -330,24 +400,21 @@ function AppShell() {
 
       <NotificationsButton variant="floating" />
 
-      <main className={`transition-[padding] duration-200 ease-out ${mainPad} ${isMobileChatView ? "flex-1 min-h-0 overflow-hidden pb-0" : "pb-24 md:pb-0"}`}>
+      <main
+        className={`transition-[padding] duration-200 ease-out ${mainPad} ${isMobileChatView ? "flex-1 min-h-0 overflow-hidden pb-0" : "pb-24 md:pb-0"}`}
+      >
         <Suspense fallback={<PageFallback />}>
           <Outlet />
         </Suspense>
       </main>
 
-
       {/* Mobile bottom nav */}
       {!isDescubrirChat && !isChef && (
-        <MobileBottomNav
-          pathname={pathname}
-          floating={!isDescubrirRoot && !isChef}
-        />
+        <MobileBottomNav pathname={pathname} floating={!isDescubrirRoot && !isChef} />
       )}
     </div>
   );
 }
-
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();

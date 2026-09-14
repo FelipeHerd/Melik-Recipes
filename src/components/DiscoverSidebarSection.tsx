@@ -154,8 +154,7 @@ export function DiscoverSidebarSection({ collapsed }: { collapsed: boolean }) {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar esta conversación?</AlertDialogTitle>
             <AlertDialogDescription>
-              Se borrarán los mensajes y las imágenes adjuntas. Esta acción no se puede
-              deshacer.
+              Se borrarán los mensajes y las imágenes adjuntas. Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

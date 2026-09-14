@@ -1,13 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowLeft } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { requestPasswordReset } from "@/lib/auth/auth.functions";
 
 export const Route = createFileRoute("/auth/reset")({
   head: () => ({
     meta: [
       { title: "Recuperar contraseña — Melik Recipes" },
-      { name: "description", content: "Solicita un enlace para restablecer la contraseña de tu cuenta en Melik Recipes." },
+      {
+        name: "description",
+        content: "Solicita un enlace para restablecer la contraseña de tu cuenta en Melik Recipes.",
+      },
       { property: "og:title", content: "Recuperar contraseña — Melik Recipes" },
       { property: "og:url", content: "https://melik-recipes.lovable.app/auth/reset" },
     ],
@@ -26,11 +29,9 @@ function ResetPage() {
     if (!email.trim()) return;
     setLoading(true);
     try {
-      await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: window.location.origin + "/auth/update-password",
-      });
+      await requestPasswordReset({ data: { email: email.trim() } });
     } catch {
-      // swallow — same UX either way
+      // swallow — same UX either way, never reveal whether the email exists
     }
     setLoading(false);
     setSent(true);
@@ -39,7 +40,10 @@ function ResetPage() {
   return (
     <div className="min-h-dvh bg-background px-5 py-10">
       <div className="mx-auto max-w-md">
-        <Link to="/auth" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+        <Link
+          to="/auth"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        >
           <ArrowLeft className="h-4 w-4" /> Volver
         </Link>
         <div className="mt-6 rounded-3xl border border-border bg-card/40 p-6 shadow-sm sm:p-8">
@@ -50,8 +54,8 @@ function ResetPage() {
 
           {sent ? (
             <div className="mt-6 rounded-2xl bg-primary/10 p-4 text-sm text-foreground">
-              Si tu correo está registrado, te enviamos un enlace de recuperación. Revisa tu bandeja de entrada y la
-              carpeta de spam.
+              Si tu correo está registrado, te enviamos un enlace de recuperación. Revisa tu bandeja
+              de entrada y la carpeta de spam.
             </div>
           ) : (
             <form onSubmit={submit} className="mt-6 grid gap-4">

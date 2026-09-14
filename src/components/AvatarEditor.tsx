@@ -4,10 +4,8 @@ import { Camera, Image as ImageIcon, Loader2, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
 import { showError } from "@/lib/errors/toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { uploadAvatar } from "@/lib/avatar.functions";
 import { useModalA11y } from "@/hooks/use-modal-a11y";
-
-const AVATAR_TTL_SECONDS = 60 * 60 * 24 * 365 * 5; // 5 years
 
 async function getCroppedBlob(imageSrc: string, area: Area): Promise<Blob> {
   const image = await new Promise<HTMLImageElement>((resolve, reject) => {
@@ -69,25 +67,9 @@ export function AvatarEditor({ userId, avatarUrl, initials }: Props) {
     setUploading(true);
     try {
       const blob = await getCroppedBlob(cropSrc!, area);
-      const path = `avatar_${userId}.jpg`;
-      const { error: upErr } = await supabase.storage
-        .from("avatars")
-        .upload(path, blob, {
-          contentType: "image/jpeg",
-          cacheControl: "3600",
-          upsert: true,
-        });
-      if (upErr) throw upErr;
-      const { data: signed, error: signErr } = await supabase.storage
-        .from("avatars")
-        .createSignedUrl(path, AVATAR_TTL_SECONDS);
-      if (signErr) throw signErr;
-      const busted = `${signed.signedUrl}${signed.signedUrl.includes("?") ? "&" : "?"}t=${Date.now()}`;
-      const { error: updErr } = await supabase
-        .from("profiles")
-        .update({ avatar_url: busted })
-        .eq("id", userId);
-      if (updErr) throw updErr;
+      const fd = new FormData();
+      fd.append("file", blob, "avatar.jpg");
+      await uploadAvatar({ data: fd });
       await queryClient.invalidateQueries({ queryKey: ["profile"] });
       toast.success("Foto de perfil actualizada");
       setCropSrc(null);
@@ -108,7 +90,13 @@ export function AvatarEditor({ userId, avatarUrl, initials }: Props) {
           className="grid h-20 w-20 place-items-center overflow-hidden rounded-3xl bg-primary text-2xl font-semibold text-primary-foreground focus:outline-none focus:ring-2 focus:ring-ring"
         >
           {avatarUrl ? (
-            <img src={avatarUrl} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+            <img
+              src={avatarUrl}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover"
+            />
           ) : (
             initials
           )}

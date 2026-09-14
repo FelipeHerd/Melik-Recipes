@@ -6,22 +6,12 @@ import { showError, errorText } from "@/lib/errors/toast";
 import type { Recipe, NewRecipe } from "@/lib/recipes-context";
 import { useModalA11y } from "@/hooks/use-modal-a11y";
 import { emojiFor, STANDARD_CATEGORIES } from "@/lib/categories";
-import {
-  UNIT_OPTIONS,
-  MAX_ROWS,
-  type Ingredient,
-  type Step,
-} from "@/lib/recipe-format";
+import { UNIT_OPTIONS, MAX_ROWS, type Ingredient, type Step } from "@/lib/recipe-format";
 import { uploadRecipeImage } from "@/lib/recipes.functions";
 import { isBakingCategory, sumPercents, formatScaledQty } from "@/lib/baker-calc";
 import { ImagePickerButton } from "@/components/ImagePickerButton";
 import { Switch } from "@/components/ui/switch";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useProfile } from "@/lib/use-profile";
 import { persistDraft } from "@/lib/drafts";
 
@@ -62,7 +52,9 @@ export function RecipeFormModal({
   const [category, setCategory] = useState(initial?.category ?? "");
   const [time, setTime] = useState<string>(initial ? String(initial.timeMinutes || 1) : "30");
   const [ingredients, setIngredients] = useState<Ingredient[]>(
-    initial && initial.ingredients.length > 0 ? [...initial.ingredients, emptyIngredient()] : [emptyIngredient()],
+    initial && initial.ingredients.length > 0
+      ? [...initial.ingredients, emptyIngredient()]
+      : [emptyIngredient()],
   );
   const [steps, setSteps] = useState<StepDraft[]>(
     initial && initial.instructions.length > 0
@@ -70,7 +62,8 @@ export function RecipeFormModal({
       : [emptyStep()],
   );
   const originalStepPaths = useMemo(
-    () => new Set((initial?.instructions ?? []).map((s) => s.imagePath).filter(Boolean) as string[]),
+    () =>
+      new Set((initial?.instructions ?? []).map((s) => s.imagePath).filter(Boolean) as string[]),
     [initial],
   );
 
@@ -96,19 +89,13 @@ export function RecipeFormModal({
   // ---- Community publish switch (paywall-aware, tri-state) ----
   const { isPremium, profile } = useProfile();
   const myUsername = profile?.username ?? null;
-  const isClonedFromOther = !!(
-    initial?.originalAuthor && initial.originalAuthor !== myUsername
-  );
+  const isClonedFromOther = !!(initial?.originalAuthor && initial.originalAuthor !== myUsername);
   // In admin mode the switch is fully unlocked (no paywall + no attribution
   // lock — admin recipes have no "original author from community").
   const lockedByAttribution = !adminMode && isClonedFromOther;
   const lockedByPaywall = !adminMode && !isPremium && !isClonedFromOther;
   const switchDisabled = lockedByAttribution || lockedByPaywall;
-  const effectiveChecked = lockedByAttribution
-    ? false
-    : lockedByPaywall
-      ? true
-      : isPublic;
+  const effectiveChecked = lockedByAttribution ? false : lockedByPaywall ? true : isPublic;
   const tooltipMessage = lockedByAttribution
     ? "Esta receta pertenece a la comunidad y no puede ser republicada por ti."
     : lockedByPaywall
@@ -211,7 +198,7 @@ export function RecipeFormModal({
         emoji: emojiFor(cat),
         ingredients: cleanIngredients,
         instructions: cleanSteps,
-        imagePath: coverCleared ? null : initial?.imagePath ?? null,
+        imagePath: coverCleared ? null : (initial?.imagePath ?? null),
         isBakerMode: bakerFormMode,
       });
       // Only replace the id on first successful save (INSERT). Later saves keep same id.
@@ -360,7 +347,11 @@ export function RecipeFormModal({
         ...(adminMode ? { isOfficialMelik: true, isPremiumOnly } : {}),
       };
       if (initial) {
-        payload.imagePath = coverCleared ? null : coverFile ? undefined : initial.imagePath ?? null;
+        payload.imagePath = coverCleared
+          ? null
+          : coverFile
+            ? undefined
+            : (initial.imagePath ?? null);
       } else if (draftIdRef.current) {
         // Draft autosaved a cover already; preserve it unless user changed it.
         payload.imagePath = coverCleared ? null : coverFile ? undefined : undefined;
@@ -400,7 +391,11 @@ export function RecipeFormModal({
             <X className="h-5 w-5" />
           </button>
           <h2 id="recipe-form-title" className="font-display text-2xl font-semibold sm:text-3xl">
-            {initial && !initial.isDraft ? "Editar receta" : initial?.isDraft ? "Continuar borrador" : "Añadir receta"}
+            {initial && !initial.isDraft
+              ? "Editar receta"
+              : initial?.isDraft
+                ? "Continuar borrador"
+                : "Añadir receta"}
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             {initial && !initial.isDraft
@@ -443,7 +438,9 @@ export function RecipeFormModal({
                   className="h-11 w-full rounded-xl border border-border bg-card px-4 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 />
                 <datalist id="melik-categories">
-                  {STANDARD_CATEGORIES.map((c) => <option key={c} value={c} />)}
+                  {STANDARD_CATEGORIES.map((c) => (
+                    <option key={c} value={c} />
+                  ))}
                 </datalist>
               </Field>
 
@@ -469,7 +466,10 @@ export function RecipeFormModal({
 
             {categoryIsBaking && (
               <div className="flex items-center justify-between rounded-2xl border border-border/60 bg-secondary/20 p-3">
-                <label htmlFor="form-baker-mode" className="flex cursor-pointer items-center gap-2 text-sm font-semibold">
+                <label
+                  htmlFor="form-baker-mode"
+                  className="flex cursor-pointer items-center gap-2 text-sm font-semibold"
+                >
                   <Calculator className="h-4 w-4 text-primary" />
                   ¿Usar Porcentaje Panadero?
                 </label>
@@ -531,13 +531,14 @@ export function RecipeFormModal({
               </div>
             )}
 
-
             <div>
               <div className="mb-1.5 flex items-baseline justify-between">
                 <span className="block text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   {bakerFormMode ? "Ingredientes (fórmula panadera)" : "Ingredientes"}
                 </span>
-                <span className="text-[11px] text-muted-foreground">{ingredients.length}/{MAX_ROWS}</span>
+                <span className="text-[11px] text-muted-foreground">
+                  {ingredients.length}/{MAX_ROWS}
+                </span>
               </div>
               {bakerFormMode && (
                 <p className="mb-2 text-[11px] text-muted-foreground">
@@ -570,7 +571,9 @@ export function RecipeFormModal({
                 <span className="block text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Pasos
                 </span>
-                <span className="text-[11px] text-muted-foreground">{steps.length}/{MAX_ROWS}</span>
+                <span className="text-[11px] text-muted-foreground">
+                  {steps.length}/{MAX_ROWS}
+                </span>
               </div>
               <div className="space-y-2">
                 {steps.map((s, i) => (
@@ -595,13 +598,22 @@ export function RecipeFormModal({
                 className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-2xl border border-dashed border-border bg-card/60 p-4 text-sm hover:bg-card"
               >
                 <span className="inline-flex items-center gap-2 text-foreground/80">
-                  <Upload className="h-4 w-4" /> {coverFile ? coverFile.name : "Foto de portada (opcional, máx. 5 MB)"}
+                  <Upload className="h-4 w-4" />{" "}
+                  {coverFile ? coverFile.name : "Foto de portada (opcional, máx. 5 MB)"}
                 </span>
-                <span className="rounded-lg bg-background px-3 py-1.5 text-xs font-medium">Añadir foto</span>
+                <span className="rounded-lg bg-background px-3 py-1.5 text-xs font-medium">
+                  Añadir foto
+                </span>
               </ImagePickerButton>
               {coverPreview && (
                 <div className="relative overflow-hidden rounded-2xl border border-border">
-                  <img src={coverPreview} alt="Vista previa" loading="lazy" decoding="async" className="max-h-56 w-full object-cover" />
+                  <img
+                    src={coverPreview}
+                    alt="Vista previa"
+                    loading="lazy"
+                    decoding="async"
+                    className="max-h-56 w-full object-cover"
+                  />
                   <button
                     type="button"
                     onClick={clearCover}
@@ -616,7 +628,11 @@ export function RecipeFormModal({
           </div>
 
           <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <button type="button" onClick={onClose} className="h-11 rounded-xl px-5 text-sm font-medium text-foreground/70 hover:bg-card">
+            <button
+              type="button"
+              onClick={onClose}
+              className="h-11 rounded-xl px-5 text-sm font-medium text-foreground/70 hover:bg-card"
+            >
               Cancelar
             </button>
             <button
@@ -627,8 +643,8 @@ export function RecipeFormModal({
               {saving
                 ? "Guardando…"
                 : initial && !initial.isDraft
-                ? "Guardar cambios"
-                : "Finalizar receta"}
+                  ? "Guardar cambios"
+                  : "Finalizar receta"}
             </button>
           </div>
         </form>
@@ -712,7 +728,9 @@ function IngredientRow({
           >
             <option value="">—</option>
             {UNIT_OPTIONS.filter(Boolean).map((u) => (
-              <option key={u} value={u}>{u}</option>
+              <option key={u} value={u}>
+                {u}
+              </option>
             ))}
           </select>
         </div>
@@ -778,7 +796,11 @@ function StepRow({
                 ariaLabel={value.imageUrl ? "Cambiar foto del paso" : "Añadir foto al paso"}
                 className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-background px-3 text-xs font-medium text-foreground/80 hover:bg-card disabled:opacity-60"
               >
-                {value.uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImagePlus className="h-3.5 w-3.5" />}
+                {value.uploading ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <ImagePlus className="h-3.5 w-3.5" />
+                )}
                 {value.imageUrl ? "Cambiar foto" : "Foto del paso"}
               </ImagePickerButton>
             ) : (
@@ -791,11 +813,19 @@ function StepRow({
               </button>
             )}
             {!isAuthenticated && (
-              <span className="text-[11px] text-muted-foreground">Inicia sesión para añadir fotos a cada paso.</span>
+              <span className="text-[11px] text-muted-foreground">
+                Inicia sesión para añadir fotos a cada paso.
+              </span>
             )}
             {value.imageUrl && (
               <div className="relative">
-                <img src={value.imageUrl} alt="" loading="lazy" decoding="async" className="h-12 w-12 rounded-lg border border-border object-cover" />
+                <img
+                  src={value.imageUrl}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  className="h-12 w-12 rounded-lg border border-border object-cover"
+                />
                 <button
                   type="button"
                   onClick={onClearImage}
@@ -824,7 +854,9 @@ function StepRow({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</span>
+      <span className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        {label}
+      </span>
       {children}
     </label>
   );

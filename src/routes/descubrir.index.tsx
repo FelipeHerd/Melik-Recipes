@@ -3,7 +3,7 @@ import { useState, Suspense, lazy } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Send, Sparkles, ImageIcon, BookOpen, X } from "lucide-react";
 import { showError } from "@/lib/errors/toast";
-import { reportLovableError } from "@/lib/lovable-error-reporting";
+import { reportClientError } from "@/lib/error-reporting";
 import { ChatAttachMenu } from "@/components/ChatAttachMenu";
 import { ChatRecipeAttachmentCard } from "@/components/ChatRecipeAttachmentCard";
 import type { AttachedImage } from "@/components/ChatImageAttach";
@@ -38,8 +38,6 @@ export const Route = createFileRoute("/descubrir/")({
   component: DescubrirIndex,
 });
 
-
-
 type Pending = {
   text: string;
   imageUrl: string | null;
@@ -66,8 +64,7 @@ function DescubrirIndex() {
       recipe: AttachedRecipe | null;
     }) => {
       const { text, image: img, recipe: recipeAtt } = opts;
-      if (!text && !img && !recipeAtt)
-        throw new Error("APP-CHAT-004: empty message");
+      if (!text && !img && !recipeAtt) throw new Error("APP-CHAT-004: empty message");
 
       // 1. Create chat
       const { id } = await createDiscoverChat({ data: {} });
@@ -131,10 +128,8 @@ function DescubrirIndex() {
       // 4. Build LLM payload with invisible recipe injection.
       let finalText = text;
       if (recipeAtt) {
-        let ctx:
-          | Awaited<ReturnType<typeof getOfficialRecipe>>
-          | (typeof recipes)[number]
-          | null = null;
+        let ctx: Awaited<ReturnType<typeof getOfficialRecipe>> | (typeof recipes)[number] | null =
+          null;
         if (recipeAtt.source === "mine") {
           ctx = recipes.find((r) => r.id === recipeAtt.id) ?? null;
         } else {
@@ -203,7 +198,7 @@ function DescubrirIndex() {
             queryClient.invalidateQueries({ queryKey: ["discover-chats"] });
           }
         })
-        .catch((err) => reportLovableError(err, { context: "generateChatTitle-cleanup" }));
+        .catch((err) => reportClientError(err, { context: "generateChatTitle-cleanup" }));
 
       return id;
     },
@@ -248,7 +243,6 @@ function DescubrirIndex() {
             <CommunityFeed />
           </Suspense>
         </div>
-
       ) : (
         <>
           <div className="mt-3 flex flex-1 flex-col overflow-y-auto [mask-image:linear-gradient(to_bottom,transparent_0,black_1.25rem)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_1.25rem)]">
@@ -276,9 +270,7 @@ function DescubrirIndex() {
                         {pending.text && <p className="whitespace-pre-wrap">{pending.text}</p>}
                       </div>
                     )}
-                    {pending.recipe && (
-                      <ChatRecipeAttachmentCard attached={pending.recipe} />
-                    )}
+                    {pending.recipe && <ChatRecipeAttachmentCard attached={pending.recipe} />}
                   </div>
                 </div>
                 {pendingAssistant ? (

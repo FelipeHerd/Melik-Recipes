@@ -54,4 +54,3 @@ export function ChefFab({ recipeId }: { recipeId?: string }) {
     </>
   );
 }
-

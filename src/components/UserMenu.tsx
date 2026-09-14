@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Crown, LogIn, LogOut, User as UserIcon } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { clearSession, useSessionUser } from "@/lib/auth/session-store";
 import { getProfile } from "@/lib/recipes.functions";
-import melikBakeryLogo from "@/assets/melik-bakery-logo.png.asset.json";
+// Served straight from public/ (see CLAUDE.md) — the Lovable-hosted asset
+// manifest this used to import from is gone along with Lovable's CDN.
+const melikBakeryLogo = { url: "/melik-bakery-logo.png" };
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,31 +15,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export function useSessionUser() {
-  const [userId, setUserId] = useState<string | null>(null);
-  const [ready, setReady] = useState(false);
-  useEffect(() => {
-    let mounted = true;
-    // getSession() reads from localStorage (no HTTP round-trip) but the
-    // Supabase v2 API returns a Promise, so we resolve it before flipping
-    // `ready` to true.
-    supabase.auth.getSession().then(({ data }) => {
-      if (!mounted) return;
-      setUserId(data.session?.user?.id ?? null);
-      setReady(true);
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!mounted) return;
-      setUserId(session?.user?.id ?? null);
-    });
-    return () => {
-      mounted = false;
-      sub.subscription.unsubscribe();
-    };
-  }, []);
-  return { userId, ready };
-}
+// eslint-disable-next-line react-refresh/only-export-components -- re-exported for the many callers that import it from here
+export { useSessionUser };
 
+// eslint-disable-next-line react-refresh/only-export-components -- shared helper colocated with the component that uses it
 export function initialsOf(first?: string | null, last?: string | null, email?: string | null) {
   const f = (first ?? "").trim();
   const l = (last ?? "").trim();
@@ -85,15 +65,15 @@ export function UserMenu({ compact = false }: { compact?: boolean } = {}) {
     );
   }
 
-
   const initials = initialsOf(profile?.first_name, profile?.last_name);
-  const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || "Mi cuenta";
+  const fullName =
+    [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || "Mi cuenta";
   const username = profile?.username ?? null;
 
   async function handleSignOut() {
     await queryClient.cancelQueries();
     queryClient.clear();
-    await supabase.auth.signOut();
+    clearSession();
     await router.invalidate();
     navigate({ to: "/", replace: true });
   }
@@ -107,7 +87,13 @@ export function UserMenu({ compact = false }: { compact?: boolean } = {}) {
           aria-label="Menú de cuenta"
         >
           {profile?.avatar_url ? (
-            <img src={profile.avatar_url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+            <img
+              src={profile.avatar_url}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover"
+            />
           ) : (
             <span>{initials}</span>
           )}
@@ -131,7 +117,10 @@ export function UserMenu({ compact = false }: { compact?: boolean } = {}) {
             <Crown className="h-4 w-4 text-[color:var(--ochre)]" /> Suscripción Melik+
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
+        <DropdownMenuItem
+          onClick={handleSignOut}
+          className="text-destructive focus:text-destructive"
+        >
           <LogOut className="h-4 w-4" /> Cerrar sesión
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -169,7 +158,8 @@ export function SidebarUsername({ collapsed }: { collapsed: boolean }) {
     staleTime: 60_000,
   });
   if (!ready || !userId) return null;
-  const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || "Mi cuenta";
+  const fullName =
+    [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || "Mi cuenta";
   const username = profile?.username ?? null;
   return (
     <div
@@ -179,9 +169,7 @@ export function SidebarUsername({ collapsed }: { collapsed: boolean }) {
       }`}
     >
       <p className="truncate text-sm font-medium text-foreground">{fullName}</p>
-      {username && (
-        <p className="truncate text-xs text-muted-foreground">@{username}</p>
-      )}
+      {username && <p className="truncate text-xs text-muted-foreground">@{username}</p>}
     </div>
   );
 }

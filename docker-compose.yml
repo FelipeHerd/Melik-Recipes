@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-melik}
+      POSTGRES_USER: ${POSTGRES_USER:-melik}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Schema bootstrap — only runs the first time the pgdata volume is empty.
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-melik} -d ${POSTGRES_DB:-melik}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    image: ghcr.io/felipeherd/melik-recipes:latest
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-melik}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-melik}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      STORAGE_SIGNING_SECRET: ${STORAGE_SIGNING_SECRET:?Set STORAGE_SIGNING_SECRET in .env}
+      CRON_SECRET: ${CRON_SECRET:?Set CRON_SECRET in .env}
+      UPLOADS_DIR: /data/uploads
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      APP_DOMAIN: ${APP_DOMAIN:-}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-}
+      ELEVENLABS_AGENT_ID: ${ELEVENLABS_AGENT_ID:-}
+      NODE_ENV: production
+      PORT: 3000
+    # No reverse proxy in this stack — the private server is expected to
+    # already terminate TLS and forward to this published port.
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    volumes:
+      - uploads:/data/uploads
+
+volumes:
+  pgdata:
+  uploads:

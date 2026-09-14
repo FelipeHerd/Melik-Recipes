@@ -184,7 +184,9 @@ export function useKikoVoice({
         if (conv) {
           try {
             const data =
-              mode === "speaking" ? conv.getOutputByteFrequencyData() : conv.getInputByteFrequencyData();
+              mode === "speaking"
+                ? conv.getOutputByteFrequencyData()
+                : conv.getInputByteFrequencyData();
             const step = Math.max(1, Math.floor(data.length / BARS));
             const next = Array.from({ length: BARS }, (_, i) => {
               let sum = 0;

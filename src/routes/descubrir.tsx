@@ -20,7 +20,10 @@ export const Route = createFileRoute("/descubrir")({
           "Chatea con Kiko, nuestro asistente con Inteligencia Artificial, y explora la comunidad de recetas Melik.",
       },
       { property: "og:title", content: "Descubrir — Chef con IA + Comunidad" },
-      { property: "og:description", content: "Descubre nuevas recetas con IA multimodal y explora la comunidad." },
+      {
+        property: "og:description",
+        content: "Descubre nuevas recetas con IA multimodal y explora la comunidad.",
+      },
     ],
     links: [{ rel: "canonical", href: "https://melik-recipes.lovable.app/descubrir" }],
   }),
@@ -33,13 +36,7 @@ function DescubrirLayout() {
   return (
     <div className="mx-auto flex h-full w-full max-w-4xl flex-col md:h-dvh md:px-4 md:py-4">
       <section className="flex min-h-0 flex-1 flex-col rounded-none border-border/60 bg-card/30 md:rounded-3xl md:border">
-        {!ready ? (
-          <DiscoverChatSkeleton />
-        ) : !userId ? (
-          <GuestBlock />
-        ) : (
-          <Outlet />
-        )}
+        {!ready ? <DiscoverChatSkeleton /> : !userId ? <GuestBlock /> : <Outlet />}
       </section>
     </div>
   );

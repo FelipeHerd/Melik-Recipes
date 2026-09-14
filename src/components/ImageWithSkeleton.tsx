@@ -27,7 +27,9 @@ export function ImageWithSkeleton({
   return (
     <span className={cn("relative block h-full w-full overflow-hidden", wrapperClassName)}>
       {!loaded && !errored && (
-        <Skeleton className={cn("absolute inset-0 h-full w-full rounded-none", skeletonClassName)} />
+        <Skeleton
+          className={cn("absolute inset-0 h-full w-full rounded-none", skeletonClassName)}
+        />
       )}
       <img
         loading="lazy"

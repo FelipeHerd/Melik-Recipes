@@ -59,7 +59,12 @@ export function UserResultsTable({
               <th className="px-4 py-3 font-medium">Rol</th>
               <th className="hidden px-4 py-3 font-medium sm:table-cell">Kiko</th>
               <th className="hidden px-4 py-3 font-medium sm:table-cell">Suscripción</th>
-              <th className="hidden px-4 py-3 font-medium sm:table-cell" title="Meses pagados totales">Meses</th>
+              <th
+                className="hidden px-4 py-3 font-medium sm:table-cell"
+                title="Meses pagados totales"
+              >
+                Meses
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-800">

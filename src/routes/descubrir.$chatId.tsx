@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Send, Sparkles, ImageIcon, BookOpen, X } from "lucide-react";
 import { showError } from "@/lib/errors/toast";
-import { reportLovableError } from "@/lib/lovable-error-reporting";
+import { reportClientError } from "@/lib/error-reporting";
 import { QueryErrorFallback } from "@/components/QueryErrorFallback";
 import ReactMarkdown from "react-markdown";
 import { ChatAttachMenu } from "@/components/ChatAttachMenu";
@@ -40,7 +40,6 @@ export const Route = createFileRoute("/descubrir/$chatId")({
   },
   component: DescubrirChat,
 });
-
 
 function DescubrirChat() {
   const { chatId } = Route.useParams();
@@ -92,8 +91,7 @@ function DescubrirChat() {
       recipe: AttachedRecipe | null;
     }) => {
       const { text, image: img, recipe: recipeAtt } = opts;
-      if (!text && !img && !recipeAtt)
-        throw new Error("APP-CHAT-004: empty message");
+      if (!text && !img && !recipeAtt) throw new Error("APP-CHAT-004: empty message");
       const current = chatQuery.data;
       if (!current) throw new Error("APP-CHAT-001: chat not loaded");
       isFirstMessage.current = current.messages.length === 0;
@@ -137,10 +135,8 @@ function DescubrirChat() {
       // Invisible recipe injection for THIS turn only.
       let finalText = text;
       if (recipeAtt) {
-        let ctx:
-          | Awaited<ReturnType<typeof getOfficialRecipe>>
-          | (typeof recipes)[number]
-          | null = null;
+        let ctx: Awaited<ReturnType<typeof getOfficialRecipe>> | (typeof recipes)[number] | null =
+          null;
         if (recipeAtt.source === "mine") {
           ctx = recipes.find((r) => r.id === recipeAtt.id) ?? null;
         } else {
@@ -217,7 +213,7 @@ function DescubrirChat() {
               queryClient.invalidateQueries({ queryKey: ["discover-chat", chatId] });
             }
           })
-          .catch((err) => reportLovableError(err, { context: "generateChatTitle-cleanup" }));
+          .catch((err) => reportClientError(err, { context: "generateChatTitle-cleanup" }));
       }
 
       return assistantMessage;
@@ -299,7 +295,6 @@ function DescubrirChat() {
     sendMut.mutate({ text, image, recipe: attachedRecipe });
   }
 
-
   const disabled = sendMut.isPending || (!input.trim() && !image && !attachedRecipe);
 
   return (
@@ -307,7 +302,10 @@ function DescubrirChat() {
       <div className="px-4 pt-2 md:px-6">
         <DiscoverTabPill tab="kiko" />
       </div>
-      <div ref={scrollerRef} className="mt-3 flex flex-1 flex-col overflow-y-auto overscroll-contain p-4 md:p-6 [mask-image:linear-gradient(to_bottom,transparent_0,black_1.25rem)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_1.25rem)]">
+      <div
+        ref={scrollerRef}
+        className="mt-3 flex flex-1 flex-col overflow-y-auto overscroll-contain p-4 md:p-6 [mask-image:linear-gradient(to_bottom,transparent_0,black_1.25rem)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_1.25rem)]"
+      >
         {chatQuery.isPending ? (
           <DiscoverChatSkeleton />
         ) : chatQuery.isError ? (
@@ -338,25 +336,18 @@ function DescubrirChat() {
               );
             const showLiveAssistant =
               liveAssistant &&
-              !serverMsgs.some(
-                (m) => m.role === "assistant" && m.text === liveAssistant.text,
-              );
+              !serverMsgs.some((m) => m.role === "assistant" && m.text === liveAssistant.text);
             return (
               <div className="flex flex-col gap-4">
                 {serverMsgs.map((m, i) => (
                   <Bubble key={i} message={m} />
                 ))}
-                {showPending && pendingUser && (
-                  <Bubble key="pending-user" message={pendingUser} />
-                )}
+                {showPending && pendingUser && <Bubble key="pending-user" message={pendingUser} />}
                 {showLiveAssistant && liveAssistant && (
                   <Bubble key="live-assistant" message={liveAssistant} />
                 )}
                 {sendMut.isPending && !liveAssistant && (
-                  <Bubble
-                    message={{ role: "assistant", text: "", created_at: "" }}
-                    thinking
-                  />
+                  <Bubble message={{ role: "assistant", text: "", created_at: "" }} thinking />
                 )}
                 <div ref={endRef} />
               </div>
@@ -504,7 +495,13 @@ function Bubble({ message, thinking }: { message: ResolvedMessage; thinking?: bo
             {thinking ? (
               <TypingDots />
             ) : (
-              <div className={!isUser ? "animate-in fade-in-0 duration-500 [animation-delay:180ms] fill-mode-backwards" : ""}>
+              <div
+                className={
+                  !isUser
+                    ? "animate-in fade-in-0 duration-500 [animation-delay:180ms] fill-mode-backwards"
+                    : ""
+                }
+              >
                 {cleanText && (
                   <div className="prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1">
                     <ReactMarkdown>{cleanText}</ReactMarkdown>
@@ -515,9 +512,7 @@ function Bubble({ message, thinking }: { message: ResolvedMessage; thinking?: bo
             )}
           </div>
         )}
-        {message.attached_recipe && (
-          <ChatRecipeAttachmentCard attached={message.attached_recipe} />
-        )}
+        {message.attached_recipe && <ChatRecipeAttachmentCard attached={message.attached_recipe} />}
       </div>
     </div>
   );

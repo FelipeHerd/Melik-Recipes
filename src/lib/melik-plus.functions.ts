@@ -1,13 +1,11 @@
 // Melik+ mock payments + bakery entitlements (server functions).
-// SECURITY:
-// - Todas las mutaciones de `paid_months_total` y de `bakery_unlocks` pasan
-//   por `supabaseAdmin` dentro de handlers autenticados. El cliente nunca
-//   decide entitlements.
-// - `supabaseAdmin` se importa dinámicamente dentro del handler para no
-//   filtrar código server-only al bundle del cliente.
+// SECURITY: all mutations of `paid_months_total` and `bakery_unlocks` go
+// through authenticated handlers using `context.userId` — the client never
+// decides entitlements. `db` is imported dynamically inside each handler to
+// keep server-only code out of the client bundle.
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireAuth } from "@/lib/auth/require-auth";
 
 export type PaymentProvider = "stripe" | "mercadopago" | "mock";
 
@@ -22,7 +20,7 @@ export interface PaymentGatewayError {
   code: PaymentGatewayErrorCode;
   message: string;
   provider?: PaymentProvider;
-  rawError?: unknown;
+  rawError?: string;
 }
 
 export interface CheckoutTransactionRequest {
@@ -52,16 +50,18 @@ const paymentSchema = z.object({
   billing: z.enum(["monthly", "yearly"]),
   provider: z.enum(["stripe", "mercadopago", "mock"]).optional().default("mock"),
   outcome: z.enum(["success", "error", "connection_error", "card_declined"]).optional(),
-  cardDetails: z.object({
-    name: z.string().optional(),
-    number: z.string().optional(),
-    expiry: z.string().optional(),
-    cvc: z.string().optional(),
-  }).optional(),
+  cardDetails: z
+    .object({
+      name: z.string().optional(),
+      number: z.string().optional(),
+      expiry: z.string().optional(),
+      cvc: z.string().optional(),
+    })
+    .optional(),
 });
 
 export const simulateMelikPlusPayment = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((input: unknown) => paymentSchema.parse(input))
   .handler(async ({ data, context }): Promise<CheckoutTransactionResult> => {
     // Latencia fija — simulador de red.
@@ -80,8 +80,8 @@ export const simulateMelikPlusPayment = createServerFn({ method: "POST" })
         selectedProvider === "stripe"
           ? "Stripe"
           : selectedProvider === "mercadopago"
-          ? "MercadoPago"
-          : "Pasarela de Pagos";
+            ? "MercadoPago"
+            : "Pasarela de Pagos";
 
       return {
         success: false,
@@ -100,7 +100,8 @@ export const simulateMelikPlusPayment = createServerFn({ method: "POST" })
         provider: selectedProvider,
         error: {
           code: "CARD_DECLINED",
-          message: "Tu tarjeta fue rechazada por el banco emisor. Por favor intenta con otro método de pago.",
+          message:
+            "Tu tarjeta fue rechazada por el banco emisor. Por favor intenta con otro método de pago.",
           provider: selectedProvider,
         },
       };
@@ -110,41 +111,30 @@ export const simulateMelikPlusPayment = createServerFn({ method: "POST" })
     const days = data.billing === "monthly" ? 30 : 365;
     const premiumUntil = new Date(Date.now() + days * 86_400_000).toISOString();
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { db } = await import("@/lib/db.server");
 
-    // Leer el contador actual para incrementar de forma atómica.
-    const { data: current, error: readErr } = await supabaseAdmin
-      .from("profiles")
-      .select("paid_months_total")
-      .eq("id", context.userId)
-      .maybeSingle();
+    let nextTotal: number;
+    try {
+      // Leer el contador actual para incrementar de forma atómica.
+      const current = await db
+        .selectFrom("profiles")
+        .select(["paid_months_total"])
+        .where("id", "=", context.userId)
+        .executeTakeFirst();
+      nextTotal = (current?.paid_months_total ?? 0) + monthsPaid;
 
-    if (readErr) {
-      return {
-        success: false,
-        provider: selectedProvider,
-        error: {
-          code: "UNKNOWN_ERROR",
-          message: "No pudimos verificar tu perfil para activar la suscripción. Intenta de nuevo.",
-          provider: selectedProvider,
-          rawError: readErr,
-        },
-      };
-    }
-    const nextTotal = (current?.paid_months_total ?? 0) + monthsPaid;
-
-    const { error } = await supabaseAdmin
-      .from("profiles")
-      .update({
-        is_premium: true,
-        premium_until: premiumUntil,
-        subscription_status: "active",
-        paid_months_total: nextTotal,
-        billing_cycle: data.billing,
-      })
-      .eq("id", context.userId);
-
-    if (error) {
+      await db
+        .updateTable("profiles")
+        .set({
+          is_premium: true,
+          premium_until: premiumUntil,
+          subscription_status: "active",
+          paid_months_total: nextTotal,
+          billing_cycle: data.billing,
+        })
+        .where("id", "=", context.userId)
+        .execute();
+    } catch (err) {
       return {
         success: false,
         provider: selectedProvider,
@@ -152,7 +142,7 @@ export const simulateMelikPlusPayment = createServerFn({ method: "POST" })
           code: "UNKNOWN_ERROR",
           message: "No pudimos guardar los cambios de tu suscripción. Intenta de nuevo.",
           provider: selectedProvider,
-          rawError: error,
+          rawError: err instanceof Error ? err.message : String(err),
         },
       };
     }
@@ -180,25 +170,27 @@ export const simulateMelikPlusPayment = createServerFn({ method: "POST" })
 export const processPaymentGatewayCheckout = simulateMelikPlusPayment;
 
 export const cancelMockSubscription = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .handler(async ({ context }) => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
-      .from("profiles")
-      .update({ subscription_status: "canceled" })
-      .eq("id", context.userId)
-      .select("premium_until")
-      .maybeSingle();
-
-    if (error) {
+    const { db, isoOrNull } = await import("@/lib/db.server");
+    let premiumUntil: Date | null;
+    try {
+      const row = await db
+        .updateTable("profiles")
+        .set({ subscription_status: "canceled" })
+        .where("id", "=", context.userId)
+        .returning(["premium_until"])
+        .executeTakeFirst();
+      premiumUntil = row?.premium_until ?? null;
+    } catch {
       throw new Error("No pudimos cancelar tu suscripción. Intenta de nuevo.");
     }
 
     return {
       ok: true as const,
-      premium_until: data?.premium_until ?? null,
+      premium_until: isoOrNull(premiumUntil),
     };
   });
 
@@ -220,14 +212,10 @@ const USER_CYCLE_MONTHS = 12;
 
 export function computeUnlockStats(paidMonthsTotal: number) {
   const earned =
-    paidMonthsTotal >= 1
-      ? Math.floor((paidMonthsTotal - 1) / UNLOCK_CADENCE_MONTHS) + 1
-      : 0;
-  const nextUnlockAtMonth =
-    paidMonthsTotal < 1 ? 1 : earned * UNLOCK_CADENCE_MONTHS + 1;
+    paidMonthsTotal >= 1 ? Math.floor((paidMonthsTotal - 1) / UNLOCK_CADENCE_MONTHS) + 1 : 0;
+  const nextUnlockAtMonth = paidMonthsTotal < 1 ? 1 : earned * UNLOCK_CADENCE_MONTHS + 1;
   const monthsToNextUnlock = Math.max(nextUnlockAtMonth - paidMonthsTotal, 0);
-  const cycleMonth =
-    paidMonthsTotal < 1 ? 0 : ((paidMonthsTotal - 1) % USER_CYCLE_MONTHS) + 1;
+  const cycleMonth = paidMonthsTotal < 1 ? 0 : ((paidMonthsTotal - 1) % USER_CYCLE_MONTHS) + 1;
   return { earned, nextUnlockAtMonth, monthsToNextUnlock, cycleMonth };
 }
 
@@ -246,24 +234,25 @@ export type BakeryEntitlements = {
 };
 
 export const getMyBakeryEntitlements = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .handler(async ({ context }): Promise<BakeryEntitlements> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { db } = await import("@/lib/db.server");
 
-    const [{ data: profile }, { data: unlocks }] = await Promise.all([
-      supabaseAdmin
-        .from("profiles")
-        .select("paid_months_total")
-        .eq("id", context.userId)
-        .maybeSingle(),
-      supabaseAdmin
-        .from("bakery_unlocks")
-        .select("recipe_id")
-        .eq("user_id", context.userId),
+    const [profile, unlocks] = await Promise.all([
+      db
+        .selectFrom("profiles")
+        .select(["paid_months_total"])
+        .where("id", "=", context.userId)
+        .executeTakeFirst(),
+      db
+        .selectFrom("bakery_unlocks")
+        .select(["recipe_id"])
+        .where("user_id", "=", context.userId)
+        .execute(),
     ]);
 
     const paidMonthsTotal = profile?.paid_months_total ?? 0;
-    const unlocksClaimed = unlocks?.length ?? 0;
+    const unlocksClaimed = unlocks.length;
     const { earned, nextUnlockAtMonth, monthsToNextUnlock, cycleMonth } =
       computeUnlockStats(paidMonthsTotal);
     const unlocksAvailable = Math.max(earned - unlocksClaimed, 0);
@@ -274,28 +263,28 @@ export const getMyBakeryEntitlements = createServerFn({ method: "GET" })
       unlocksEarned: earned,
       unlocksClaimed,
       unlocksAvailable,
-      unlockedRecipeIds: (unlocks ?? []).map((u) => u.recipe_id as string),
+      unlockedRecipeIds: unlocks.map((u) => u.recipe_id),
       nextUnlockAtMonth,
       monthsToNextUnlock,
     };
   });
 
 export const claimBakeryUnlock = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((input: { recipeId: string }) =>
     z.object({ recipeId: z.string().uuid() }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { db } = await import("@/lib/db.server");
+    const { sql } = await import("kysely");
 
     // 1) Receta debe ser oficial + premium-only. Recetas oficiales no premium
     //    no requieren desbloqueo (gratuitas).
-    const { data: recipe, error: recipeErr } = await supabaseAdmin
-      .from("recipes")
-      .select("id, is_official_melik, is_premium_only")
-      .eq("id", data.recipeId)
-      .maybeSingle();
-    if (recipeErr) throw new Error("APP-SYS-001: " + recipeErr.message);
+    const recipe = await db
+      .selectFrom("recipes")
+      .select(["id", "is_official_melik", "is_premium_only"])
+      .where("id", "=", data.recipeId)
+      .executeTakeFirst();
     if (!recipe || !recipe.is_official_melik) {
       throw new Error("APP-RCP-001: not found");
     }
@@ -305,30 +294,31 @@ export const claimBakeryUnlock = createServerFn({ method: "POST" })
     }
 
     // 2) Si ya está desbloqueada por este usuario, no consumimos nada.
-    const { data: existing } = await supabaseAdmin
-      .from("bakery_unlocks")
-      .select("user_id")
-      .eq("user_id", context.userId)
-      .eq("recipe_id", data.recipeId)
-      .maybeSingle();
+    const existing = await db
+      .selectFrom("bakery_unlocks")
+      .select(["user_id"])
+      .where("user_id", "=", context.userId)
+      .where("recipe_id", "=", data.recipeId)
+      .executeTakeFirst();
     if (existing) {
       return { alreadyClaimed: true as const };
     }
 
     // 3) Calcular disponibles.
-    const [{ data: profile }, { count }] = await Promise.all([
-      supabaseAdmin
-        .from("profiles")
-        .select("paid_months_total")
-        .eq("id", context.userId)
-        .maybeSingle(),
-      supabaseAdmin
-        .from("bakery_unlocks")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", context.userId),
+    const [profile, claimedRow] = await Promise.all([
+      db
+        .selectFrom("profiles")
+        .select(["paid_months_total"])
+        .where("id", "=", context.userId)
+        .executeTakeFirst(),
+      db
+        .selectFrom("bakery_unlocks")
+        .select(sql<number>`count(*)`.as("count"))
+        .where("user_id", "=", context.userId)
+        .executeTakeFirstOrThrow(),
     ]);
     const paidMonthsTotal = profile?.paid_months_total ?? 0;
-    const claimed = count ?? 0;
+    const claimed = Number(claimedRow.count);
     const { earned } = computeUnlockStats(paidMonthsTotal);
     const available = Math.max(earned - claimed, 0);
 
@@ -337,11 +327,13 @@ export const claimBakeryUnlock = createServerFn({ method: "POST" })
     }
 
     // 4) Insertar (idempotente vía PK).
-    const { error: insertErr } = await supabaseAdmin
-      .from("bakery_unlocks")
-      .insert({ user_id: context.userId, recipe_id: data.recipeId });
-    if (insertErr) {
-      throw new Error("APP-SYS-001: " + insertErr.message);
+    try {
+      await db
+        .insertInto("bakery_unlocks")
+        .values({ user_id: context.userId, recipe_id: data.recipeId })
+        .execute();
+    } catch (err) {
+      throw new Error("APP-SYS-001: " + (err instanceof Error ? err.message : String(err)));
     }
 
     return {

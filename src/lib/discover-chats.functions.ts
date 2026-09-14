@@ -1,8 +1,11 @@
 // Discover chats: cloud-persisted conversations with Chef AI (Vision).
-// Images stored in private `chat-images` bucket; DB keeps only the path.
+// Images stored under the local `chat-images` bucket; DB keeps only the path.
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireAuth } from "@/lib/auth/require-auth";
 import { z } from "zod";
+
+const CHAT_IMAGE_BUCKET = "chat-images";
+const SIGNED_URL_TTL = 60 * 60 * 24 * 7;
 
 export type AttachedRecipeMeta = {
   id: string;
@@ -36,19 +39,20 @@ export type DiscoverChatFull = {
 
 // ---------- LIST ----------
 export const listDiscoverChats = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .handler(async ({ context }): Promise<DiscoverChatSummary[]> => {
-    const { data, error } = await context.supabase
-      .from("discover_chats")
-      .select("id, title, updated_at")
-      .eq("user_id", context.userId)
-      .order("updated_at", { ascending: false })
-      .limit(100);
-    if (error) throw new Error("APP-SYS-001: " + error.message);
-    return (data ?? []).map((r) => ({
+    const { db, isoOrNull } = await import("@/lib/db.server");
+    const rows = await db
+      .selectFrom("discover_chats")
+      .select(["id", "title", "updated_at"])
+      .where("user_id", "=", context.userId)
+      .orderBy("updated_at", "desc")
+      .limit(100)
+      .execute();
+    return rows.map((r) => ({
       id: r.id,
       title: r.title,
-      updatedAt: r.updated_at,
+      updatedAt: isoOrNull(r.updated_at) as string,
     }));
   });
 
@@ -56,30 +60,24 @@ export const listDiscoverChats = createServerFn({ method: "GET" })
 const idSchema = z.object({ id: z.string().uuid() });
 
 export const getDiscoverChat = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((input: unknown) => idSchema.parse(input))
   .handler(async ({ data, context }): Promise<DiscoverChatFull> => {
-    const { data: row, error } = await context.supabase
-      .from("discover_chats")
-      .select("id, title, messages, created_at, updated_at")
-      .eq("id", data.id)
-      .eq("user_id", context.userId)
-      .maybeSingle();
-    if (error) throw new Error("APP-SYS-001: " + error.message);
+    const { db, isoOrNull } = await import("@/lib/db.server");
+    const row = await db
+      .selectFrom("discover_chats")
+      .select(["id", "title", "messages", "created_at", "updated_at"])
+      .where("id", "=", data.id)
+      .where("user_id", "=", context.userId)
+      .executeTakeFirst();
     if (!row) throw new Error("APP-RCP-001: not found");
 
     const raw = Array.isArray(row.messages) ? (row.messages as StoredMessage[]) : [];
-    const paths = Array.from(
-      new Set(raw.map((m) => m.image_path).filter((p): p is string => !!p)),
-    );
-    const signedMap = new Map<string, string>();
+    const paths = Array.from(new Set(raw.map((m) => m.image_path).filter((p): p is string => !!p)));
+    let signedMap = new Map<string, string>();
     if (paths.length > 0) {
-      const { data: signed } = await context.supabase.storage
-        .from("chat-images")
-        .createSignedUrls(paths, 60 * 60 * 24 * 7);
-      (signed ?? []).forEach((s, i) => {
-        if (s.signedUrl) signedMap.set(paths[i], s.signedUrl);
-      });
+      const { signPaths } = await import("@/lib/storage/signed-url.server");
+      signedMap = signPaths(CHAT_IMAGE_BUCKET, paths, SIGNED_URL_TTL);
     }
 
     const messages: ResolvedMessage[] = raw.map((m) => ({
@@ -91,8 +89,8 @@ export const getDiscoverChat = createServerFn({ method: "POST" })
       id: row.id,
       title: row.title,
       messages,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
+      createdAt: isoOrNull(row.created_at) as string,
+      updatedAt: isoOrNull(row.updated_at) as string,
     };
   });
 
@@ -102,19 +100,15 @@ const createSchema = z.object({
 });
 
 export const createDiscoverChat = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((input: unknown) => createSchema.parse(input ?? {}))
   .handler(async ({ data, context }): Promise<{ id: string }> => {
-    const { data: row, error } = await context.supabase
-      .from("discover_chats")
-      .insert({
-        user_id: context.userId,
-        title: data.title ?? "Nuevo chat",
-        messages: [],
-      })
-      .select("id")
-      .single();
-    if (error) throw new Error("APP-SYS-001: " + error.message);
+    const { db, toJsonb } = await import("@/lib/db.server");
+    const row = await db
+      .insertInto("discover_chats")
+      .values({ user_id: context.userId, title: data.title ?? "Nuevo chat", messages: toJsonb([]) })
+      .returning(["id"])
+      .executeTakeFirstOrThrow();
     return { id: row.id };
   });
 
@@ -136,16 +130,16 @@ const appendSchema = z.object({
 });
 
 export const appendDiscoverMessage = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((input: unknown) => appendSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { data: row, error: readErr } = await context.supabase
-      .from("discover_chats")
-      .select("messages")
-      .eq("id", data.id)
-      .eq("user_id", context.userId)
-      .maybeSingle();
-    if (readErr) throw new Error("APP-SYS-001: " + readErr.message);
+    const { db, toJsonb } = await import("@/lib/db.server");
+    const row = await db
+      .selectFrom("discover_chats")
+      .select(["messages"])
+      .where("id", "=", data.id)
+      .where("user_id", "=", context.userId)
+      .executeTakeFirst();
     if (!row) throw new Error("APP-RCP-001: not found");
 
     const current = Array.isArray(row.messages) ? (row.messages as StoredMessage[]) : [];
@@ -154,54 +148,56 @@ export const appendDiscoverMessage = createServerFn({ method: "POST" })
       { ...data.message, created_at: new Date().toISOString() },
     ];
 
-    const { error } = await context.supabase
-      .from("discover_chats")
-      .update({ messages: next, updated_at: new Date().toISOString() })
-      .eq("id", data.id)
-      .eq("user_id", context.userId);
-    if (error) throw new Error("APP-SYS-001: " + error.message);
+    await db
+      .updateTable("discover_chats")
+      .set({ messages: toJsonb(next), updated_at: new Date() })
+      .where("id", "=", data.id)
+      .where("user_id", "=", context.userId)
+      .execute();
     return { ok: true };
   });
 
 // ---------- RENAME ----------
 const renameSchema = z.object({ id: z.string().uuid(), title: z.string().min(1).max(120) });
 export const renameDiscoverChat = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((input: unknown) => renameSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
-      .from("discover_chats")
-      .update({ title: data.title })
-      .eq("id", data.id)
-      .eq("user_id", context.userId);
-    if (error) throw new Error("APP-SYS-001: " + error.message);
+    const { db } = await import("@/lib/db.server");
+    await db
+      .updateTable("discover_chats")
+      .set({ title: data.title })
+      .where("id", "=", data.id)
+      .where("user_id", "=", context.userId)
+      .execute();
     return { ok: true };
   });
 
 // ---------- DELETE ----------
 export const deleteDiscoverChat = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((input: unknown) => idSchema.parse(input))
   .handler(async ({ data, context }) => {
+    const { db } = await import("@/lib/db.server");
     // Remove chat images first (best-effort).
-    const { data: row } = await context.supabase
-      .from("discover_chats")
-      .select("messages")
-      .eq("id", data.id)
-      .eq("user_id", context.userId)
-      .maybeSingle();
+    const row = await db
+      .selectFrom("discover_chats")
+      .select(["messages"])
+      .where("id", "=", data.id)
+      .where("user_id", "=", context.userId)
+      .executeTakeFirst();
     const paths = (row?.messages as StoredMessage[] | undefined)
       ?.map((m) => m.image_path)
       .filter((p): p is string => !!p);
     if (paths && paths.length > 0) {
-      await context.supabase.storage.from("chat-images").remove(paths).catch(() => {});
+      const { deleteFile } = await import("@/lib/storage/local-storage.server");
+      await Promise.all(paths.map((p) => deleteFile(CHAT_IMAGE_BUCKET, p).catch(() => {})));
     }
-    const { error } = await context.supabase
-      .from("discover_chats")
-      .delete()
-      .eq("id", data.id)
-      .eq("user_id", context.userId);
-    if (error) throw new Error("APP-SYS-001: " + error.message);
+    await db
+      .deleteFrom("discover_chats")
+      .where("id", "=", data.id)
+      .where("user_id", "=", context.userId)
+      .execute();
     return { ok: true };
   });
 
@@ -213,7 +209,7 @@ const uploadSchema = z.object({
 });
 
 export const uploadChatImage = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((input: unknown) => uploadSchema.parse(input))
   .handler(async ({ data, context }): Promise<{ path: string }> => {
     const clean = data.base64.replace(/^data:[^;]+;base64,/, "");
@@ -223,9 +219,7 @@ export const uploadChatImage = createServerFn({ method: "POST" })
     const ext = data.mime.includes("png") ? "png" : "jpg";
     const path = `${context.userId}/${data.chatId}/${crypto.randomUUID()}.${ext}`;
 
-    const { error } = await context.supabase.storage
-      .from("chat-images")
-      .upload(path, bytes, { contentType: data.mime, upsert: false });
-    if (error) throw new Error("APP-SYS-001: " + error.message);
+    const { saveFile } = await import("@/lib/storage/local-storage.server");
+    await saveFile(CHAT_IMAGE_BUCKET, path, bytes);
     return { path };
   });

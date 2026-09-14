@@ -1,7 +1,7 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { BarChart3, Users, Croissant, ArrowLeft, LogOut, Shield, Bell } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { clearSession } from "@/lib/auth/session-store";
 
 const items = [
   { to: "/admin", label: "Métricas", icon: BarChart3, exact: true },
@@ -18,7 +18,7 @@ export function AdminSidebar() {
   async function handleSignOut() {
     await queryClient.cancelQueries();
     queryClient.clear();
-    await supabase.auth.signOut();
+    clearSession();
     navigate({ to: "/auth-admin", replace: true });
   }
 

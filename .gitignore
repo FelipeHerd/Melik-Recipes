@@ -16,6 +16,10 @@ dist-ssr
 .nitro
 *.local
 
+# Secrets — was previously tracked in git with live Supabase credentials;
+# see .env.example for the variables a deployment needs to set.
+.env
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars

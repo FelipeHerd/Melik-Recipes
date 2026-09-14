@@ -4,6 +4,7 @@ import { ImagePickerButton } from "@/components/ImagePickerButton";
 
 export type AttachedImage = { base64: string; mime: string; previewUrl: string };
 
+// eslint-disable-next-line react-refresh/only-export-components -- shared helper colocated with the component that uses it
 export async function compressImage(file: File): Promise<AttachedImage> {
   const dataUrl = await new Promise<string>((resolve, reject) => {
     const r = new FileReader();
@@ -74,7 +75,13 @@ export function ChatImageAttach({
       </ImagePickerButton>
       {attached && (
         <div className="absolute -top-16 left-2 flex items-center gap-2 rounded-2xl border border-border bg-background p-1.5 shadow-lg">
-          <img src={attached.previewUrl} alt="" loading="lazy" decoding="async" className="h-12 w-12 rounded-xl object-cover" />
+          <img
+            src={attached.previewUrl}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="h-12 w-12 rounded-xl object-cover"
+          />
           <button
             type="button"
             onClick={() => onChange(null)}

@@ -55,14 +55,25 @@ export function QrScannerModal({ onClose }: { onClose: () => void }) {
       })
       .catch((err: unknown) => {
         if (cancelled) return;
-        const name = err && typeof err === "object" && "name" in err ? String((err as { name?: unknown }).name ?? "") : "";
+        const name =
+          err && typeof err === "object" && "name" in err
+            ? String((err as { name?: unknown }).name ?? "")
+            : "";
         const msg = err instanceof Error ? err.message : String(err);
-        const denied = name === "NotAllowedError" || name === "PermissionDeniedError" || /permission|denied|NotAllowed/i.test(msg);
-        const notFound = name === "NotFoundError" || name === "DevicesNotFoundError" || name === "OverconstrainedError";
+        const denied =
+          name === "NotAllowedError" ||
+          name === "PermissionDeniedError" ||
+          /permission|denied|NotAllowed/i.test(msg);
+        const notFound =
+          name === "NotFoundError" ||
+          name === "DevicesNotFoundError" ||
+          name === "OverconstrainedError";
         if (denied) {
           setStatus("denied");
         } else if (notFound) {
-          setErrorMsg("No encontramos ninguna cámara. Conecta una o prueba desde otro dispositivo.");
+          setErrorMsg(
+            "No encontramos ninguna cámara. Conecta una o prueba desde otro dispositivo.",
+          );
           setStatus("error");
         } else {
           setErrorMsg("No pudimos iniciar la cámara. Vuelve a intentarlo.");
@@ -147,9 +158,7 @@ export function QrScannerModal({ onClose }: { onClose: () => void }) {
           {status === "error" && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/95 p-6 text-center">
               <p className="font-display text-lg font-semibold">No se pudo iniciar la cámara</p>
-              {errorMsg && (
-                <p className="text-sm text-muted-foreground break-words">{errorMsg}</p>
-              )}
+              {errorMsg && <p className="text-sm text-muted-foreground break-words">{errorMsg}</p>}
               <button
                 type="button"
                 onClick={onClose}
@@ -171,6 +180,7 @@ export function QrScannerModal({ onClose }: { onClose: () => void }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- shared helper colocated with the component that uses it
 export function extractShareToken(input: string): string | null {
   const m = input.match(UUID_RE);
   return m ? m[1].toLowerCase() : null;

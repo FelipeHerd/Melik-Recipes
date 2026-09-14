@@ -67,7 +67,6 @@ export const ERRORS: Record<AppErrorCode, AppErrorEntry> = {
       "Cada 6 meses acumulados de Melik+ ganas un desbloqueo permanente. Sigue suscrito para obtener el siguiente.",
   },
 
-
   [ERR.AI_RATE_LIMITED]: {
     code: ERR.AI_RATE_LIMITED,
     title: "Kiko está saturado",
@@ -82,12 +81,14 @@ export const ERRORS: Record<AppErrorCode, AppErrorEntry> = {
   [ERR.AI_BAD_RESPONSE]: {
     code: ERR.AI_BAD_RESPONSE,
     title: "Kiko tuvo un pequeño lapso",
-    description: "Kiko tuvo un pequeño lapso de memoria al escribir la receta. Por favor, pídele que la genere de nuevo.",
+    description:
+      "Kiko tuvo un pequeño lapso de memoria al escribir la receta. Por favor, pídele que la genere de nuevo.",
   },
   [ERR.AI_BAD_RECIPE]: {
     code: ERR.AI_BAD_RECIPE,
     title: "Kiko tuvo un pequeño lapso",
-    description: "Kiko tuvo un pequeño lapso de memoria al escribir la receta. Por favor, pídele que la genere de nuevo.",
+    description:
+      "Kiko tuvo un pequeño lapso de memoria al escribir la receta. Por favor, pídele que la genere de nuevo.",
   },
   [ERR.AI_BLOCKED]: {
     code: ERR.AI_BLOCKED,
@@ -111,8 +112,6 @@ export const ERRORS: Record<AppErrorCode, AppErrorEntry> = {
     title: "La voz de Kiko no está disponible",
     description: "No pudimos iniciar la llamada. Inténtalo de nuevo en unos momentos.",
   },
-
-
 
   [ERR.FILE_BAD_FORMAT]: {
     code: ERR.FILE_BAD_FORMAT,

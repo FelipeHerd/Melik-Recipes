@@ -65,7 +65,9 @@ export function ChatRecipeAttachmentCard({ attached }: { attached: AttachedRecip
   // not — fall back to a neutral book icon.
   const mine = attached.source === "mine" ? recipes.find((r) => r.id === attached.id) : null;
   const emoji = mine?.emoji;
-  const meta = mine ? `${mine.category || ""}${mine.timeMinutes ? ` · ${mine.timeMinutes} min` : ""}` : "Melik Bakery";
+  const meta = mine
+    ? `${mine.category || ""}${mine.timeMinutes ? ` · ${mine.timeMinutes} min` : ""}`
+    : "Melik Bakery";
 
   return (
     <>
@@ -78,7 +80,9 @@ export function ChatRecipeAttachmentCard({ attached }: { attached: AttachedRecip
             {attached.title}
           </p>
           <p className="mt-0.5 flex items-center gap-1 truncate text-[11px] text-muted-foreground">
-            {attached.source === "official" && <Sparkles className="h-3 w-3 text-[color:var(--ochre)]" />}
+            {attached.source === "official" && (
+              <Sparkles className="h-3 w-3 text-[color:var(--ochre)]" />
+            )}
             {meta}
           </p>
         </div>
@@ -89,7 +93,11 @@ export function ChatRecipeAttachmentCard({ attached }: { attached: AttachedRecip
           aria-label={`Ver ${attached.title}`}
           className="inline-flex h-8 flex-none items-center gap-1.5 rounded-xl bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
         >
-          {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Eye className="h-3.5 w-3.5" />}
+          {loading ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Eye className="h-3.5 w-3.5" />
+          )}
           Ver
         </button>
       </div>

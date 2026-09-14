@@ -17,8 +17,7 @@ export function RecipeDraftCard({ draft }: { draft: RecipeDraft }) {
 
   const saveMut = useMutation({
     mutationFn: async () => {
-      const emoji =
-        draft.emoji && draft.emoji.trim() ? draft.emoji : emojiFor(draft.category);
+      const emoji = draft.emoji && draft.emoji.trim() ? draft.emoji : emojiFor(draft.category);
       const { id } = await createRecipe({
         data: {
           title: draft.title,

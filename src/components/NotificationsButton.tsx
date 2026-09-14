@@ -1,34 +1,20 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { Bell } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
-import { supabase } from "@/integrations/supabase/client";
+import { useSessionUser } from "@/lib/auth/session-store";
 import { getMyUnreadNotificationsCount } from "@/lib/admin.functions";
 
-// Hook interno: user id actual + suscripción realtime a `notifications`.
-// - QueryKey scoped por userId para evitar fuga de cache entre sesiones.
-// - Canal realtime con nombre único por instancia (soporta múltiples botones
-//   montados: header móvil + floating desktop) y cleanup asíncrono.
+// Hook interno: user id actual + refresco del contador de no leídas.
+// QueryKey scoped por userId para evitar fuga de cache entre sesiones.
+// TODO(realtime phase): swap refetchInterval for a WebSocket push
+// (src/lib/realtime/ws-client.ts) — see migration plan Section 3.7.
 function useUnreadNotifications(): { count: number; enabled: boolean } {
-  const qc = useQueryClient();
-  const [userId, setUserId] = useState<string | null>(null);
+  const { userId } = useSessionUser();
 
-  useEffect(() => {
-    let mounted = true;
-    supabase.auth.getUser().then(({ data }) => {
-      if (mounted) setUserId(data.user?.id ?? null);
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      setUserId(session?.user?.id ?? null);
-    });
-    return () => {
-      mounted = false;
-      sub.subscription.unsubscribe();
-    };
-  }, []);
-
-  const fetchCount = useServerFn(getMyUnreadNotificationsCount as unknown as typeof getMyUnreadNotificationsCount);
+  const fetchCount = useServerFn(
+    getMyUnreadNotificationsCount as unknown as typeof getMyUnreadNotificationsCount,
+  );
   const { data } = useQuery({
     queryKey: ["notifications", "unreadCount", userId],
     queryFn: () => fetchCount() as unknown as Promise<{ count: number }>,
@@ -36,35 +22,8 @@ function useUnreadNotifications(): { count: number; enabled: boolean } {
     staleTime: 0,
     refetchOnWindowFocus: true,
     refetchOnMount: "always",
+    refetchInterval: 30_000,
   });
-
-  useEffect(() => {
-    if (!userId) return;
-    // Nombre único: evita colisión si hay dos instancias del botón montadas.
-    const channelName = `notifications:${userId}:${
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : Math.random().toString(36).slice(2)
-    }`;
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },
-        () => {
-          // Invalida sólo lo scoped a este userId, no todo "notifications".
-          qc.invalidateQueries({ queryKey: ["notifications", "unreadCount", userId] });
-          qc.invalidateQueries({ queryKey: ["notifications", "mine", userId] });
-        },
-      )
-      .subscribe();
-    return () => {
-      // Cleanup asíncrono: asegura unsubscribe antes de que otro userId cree
-      // un canal nuevo y evita ventana en la que llegue un evento del user
-      // anterior.
-      void supabase.removeChannel(channel);
-    };
-  }, [userId, qc]);
 
   return { count: data?.count ?? 0, enabled: !!userId };
 }

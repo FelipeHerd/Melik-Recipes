@@ -30,7 +30,8 @@ export function KikoVoicePaywallModal({
           </AlertDialogTitle>
           <AlertDialogDescription className="mt-2 text-sm text-muted-foreground leading-relaxed">
             La interacción por voz en tiempo real con Kiko es una función exclusiva de{" "}
-            <span className="font-semibold text-foreground">Melik+</span>. Cocina con las manos libres mientras Kiko te guía paso a paso por tus recetas.
+            <span className="font-semibold text-foreground">Melik+</span>. Cocina con las manos
+            libres mientras Kiko te guía paso a paso por tus recetas.
           </AlertDialogDescription>
         </AlertDialogHeader>
 

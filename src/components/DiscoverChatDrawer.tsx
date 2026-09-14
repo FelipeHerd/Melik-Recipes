@@ -4,13 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { MessageSquarePlus, Trash2, MessageSquare, Compass } from "lucide-react";
 import { showError } from "@/lib/errors/toast";
 import { useSessionUser } from "@/components/UserMenu";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -130,9 +124,7 @@ export function DiscoverChatDrawer() {
                           params={{ chatId: c.id }}
                           onClick={() => setOpen(false)}
                           className={`flex-1 truncate rounded-xl px-3 py-2 text-sm ${
-                            active
-                              ? "bg-primary/10 font-semibold text-primary"
-                              : "hover:bg-card"
+                            active ? "bg-primary/10 font-semibold text-primary" : "hover:bg-card"
                           }`}
                         >
                           {c.title}
@@ -163,8 +155,7 @@ export function DiscoverChatDrawer() {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar esta conversación?</AlertDialogTitle>
             <AlertDialogDescription>
-              Se borrarán los mensajes y las imágenes adjuntas. Esta acción no se puede
-              deshacer.
+              Se borrarán los mensajes y las imágenes adjuntas. Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

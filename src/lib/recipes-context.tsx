@@ -1,8 +1,16 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { useInfiniteQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { showError } from "@/lib/errors/toast";
-import { supabase } from "@/integrations/supabase/client";
+import { getSession, subscribeSession } from "@/lib/auth/session-store";
 import {
   listRecipes,
   createRecipe as createRecipeFn,
@@ -13,7 +21,12 @@ import {
   type RecipesPage,
 } from "@/lib/recipes.functions";
 import { parseIngredients, parseSteps, type Ingredient, type Step } from "@/lib/recipe-format";
-import { prependInfiniteItem, removeInfiniteItem, replaceInfiniteItem, snapshotInfinite } from "@/lib/optimistic-infinite";
+import {
+  prependInfiniteItem,
+  removeInfiniteItem,
+  replaceInfiniteItem,
+  snapshotInfinite,
+} from "@/lib/optimistic-infinite";
 
 export type { Ingredient, Step } from "@/lib/recipe-format";
 
@@ -37,7 +50,15 @@ export type Recipe = {
 
 export type NewRecipe = Omit<
   Recipe,
-  "id" | "createdAt" | "emoji" | "imageUrl" | "imagePath" | "isBakerMode" | "isDraft" | "isPublic" | "originalAuthor"
+  | "id"
+  | "createdAt"
+  | "emoji"
+  | "imageUrl"
+  | "imagePath"
+  | "isBakerMode"
+  | "isDraft"
+  | "isPublic"
+  | "originalAuthor"
 > & {
   emoji?: string;
   isBakerMode?: boolean;
@@ -149,22 +170,23 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
   const [pendingGuestMigration, setPendingGuestMigration] = useState<Recipe[]>([]);
 
   useEffect(() => {
-    let mounted = true;
-    supabase.auth.getUser().then(({ data }) => {
-      if (!mounted) return;
-      const uid = data.user?.id ?? null;
-      setUserId(uid);
-      setAuthReady(true);
-      // On initial load: if user already authenticated and there are guest leftovers, prompt.
-      if (uid) {
-        const pending = loadGuest();
-        if (pending.length > 0) setPendingGuestMigration(pending);
-      }
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange(async (event, session) => {
-      const newId = session?.user?.id ?? null;
+    const initialUid = getSession()?.userId ?? null;
+    setUserId(initialUid);
+    setAuthReady(true);
+    // On initial load: if user already authenticated and there are guest leftovers, prompt.
+    if (initialUid) {
+      const pending = loadGuest();
+      if (pending.length > 0) setPendingGuestMigration(pending);
+    }
+
+    let previousId = initialUid;
+    return subscribeSession(() => {
+      const newId = getSession()?.userId ?? null;
+      if (newId === previousId) return;
+      const wasSignedIn = !!previousId;
+      previousId = newId;
       setUserId(newId);
-      if (event === "SIGNED_IN" && newId) {
+      if (newId && !wasSignedIn) {
         const pending = loadGuest();
         if (pending.length > 0) {
           setPendingGuestMigration(pending);
@@ -175,17 +197,13 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
         queryClient.invalidateQueries({ queryKey: ["recipes"] });
         queryClient.invalidateQueries({ queryKey: ["profile"] });
       }
-      if (event === "SIGNED_OUT") {
+      if (!newId) {
         setPendingGuestMigration([]);
         queryClient.removeQueries({ queryKey: ["recipes"] });
         queryClient.removeQueries({ queryKey: ["profile"] });
         queryClient.removeQueries({ queryKey: ["notifications"] });
       }
     });
-    return () => {
-      mounted = false;
-      sub.subscription.unsubscribe();
-    };
   }, [queryClient]);
 
   useEffect(() => {
@@ -240,7 +258,10 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
             data: {
               title: rest.title,
               ingredients: rest.ingredients,
-              instructions: rest.instructions.map((s) => ({ text: s.text, imagePath: s.imagePath ?? null })),
+              instructions: rest.instructions.map((s) => ({
+                text: s.text,
+                imagePath: s.imagePath ?? null,
+              })),
               category: rest.category,
               timeMinutes: rest.timeMinutes,
               emoji,
@@ -327,7 +348,8 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
     const withUploads = await Promise.all(
       recipesToMigrate.map(async (r) => {
         const url = r.imageUrl;
-        let imagePath: string | null = r.imagePath ?? (url && !url.startsWith("data:") ? url : null);
+        let imagePath: string | null =
+          r.imagePath ?? (url && !url.startsWith("data:") ? url : null);
 
         if (url && url.startsWith("data:")) {
           try {
@@ -346,7 +368,10 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
         return {
           title: r.title,
           ingredients: r.ingredients,
-          instructions: r.instructions.map((s) => ({ text: s.text, imagePath: s.imagePath ?? null })),
+          instructions: r.instructions.map((s) => ({
+            text: s.text,
+            imagePath: s.imagePath ?? null,
+          })),
           category: r.category,
           timeMinutes: r.timeMinutes,
           emoji: r.emoji,
@@ -394,7 +419,11 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
           []
         ).find((x) => x.id === id);
         const finalCover =
-          imagePath !== undefined ? imagePath : rest.imagePath !== undefined ? rest.imagePath : existing?.imagePath ?? null;
+          imagePath !== undefined
+            ? imagePath
+            : rest.imagePath !== undefined
+              ? rest.imagePath
+              : (existing?.imagePath ?? null);
 
         // Pilar 1 + Vacuna 2: optimistic replace sobre InfiniteData.
         await queryClient.cancelQueries({ queryKey: key });
@@ -421,7 +450,10 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
               id,
               title: rest.title,
               ingredients: rest.ingredients,
-              instructions: rest.instructions.map((s) => ({ text: s.text, imagePath: s.imagePath ?? null })),
+              instructions: rest.instructions.map((s) => ({
+                text: s.text,
+                imagePath: s.imagePath ?? null,
+              })),
               category: rest.category,
               timeMinutes: rest.timeMinutes,
               emoji,
@@ -495,6 +527,7 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- context hook colocated with its provider
 export function useRecipes() {
   const ctx = useContext(RecipesContext);
   if (!ctx) throw new Error("useRecipes must be used within RecipesProvider");

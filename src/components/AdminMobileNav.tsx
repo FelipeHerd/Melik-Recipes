@@ -1,17 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  BarChart3,
-  Users,
-  Croissant,
-  ArrowLeft,
-  LogOut,
-  Shield,
-  Bell,
-  Menu,
-} from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { BarChart3, Users, Croissant, ArrowLeft, LogOut, Shield, Bell, Menu } from "lucide-react";
+import { clearSession } from "@/lib/auth/session-store";
 import {
   Sheet,
   SheetContent,
@@ -36,7 +27,7 @@ export function AdminMobileNav() {
   async function handleSignOut() {
     await queryClient.cancelQueries();
     queryClient.clear();
-    await supabase.auth.signOut();
+    clearSession();
     setOpen(false);
     navigate({ to: "/auth-admin", replace: true });
   }
@@ -85,9 +76,7 @@ export function AdminMobileNav() {
           <nav className="flex-1 overflow-y-auto px-3 py-4">
             <ul className="flex flex-col gap-1">
               {items.map((it) => {
-                const active = it.exact
-                  ? pathname === it.to
-                  : pathname.startsWith(it.to);
+                const active = it.exact ? pathname === it.to : pathname.startsWith(it.to);
                 const Icon = it.icon;
                 return (
                   <li key={it.to}>

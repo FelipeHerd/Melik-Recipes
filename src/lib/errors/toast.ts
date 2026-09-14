@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import type { AppErrorCode } from "./codes";
 import { toAppError } from "./map";
 import { ERRORS, REPORTABLE_ERROR_CODES } from "./catalog";
-import { supabase } from "@/integrations/supabase/client";
+import { getSession } from "@/lib/auth/session-store";
 import { reportError } from "@/lib/admin.functions";
 
 function composeDescription(app: {
@@ -19,14 +19,9 @@ function composeDescription(app: {
   return `Código: ${app.code}`;
 }
 
-async function sendReport(app: {
-  code: AppErrorCode | "";
-  title: string;
-  description?: string;
-}) {
+async function sendReport(app: { code: AppErrorCode | ""; title: string; description?: string }) {
   // Guard: sin sesión no permitimos reportes (evita spam anónimo).
-  const { data: sess } = await supabase.auth.getSession();
-  if (!sess.session) {
+  if (!getSession()) {
     toast.error("Inicia sesión para reportar");
     return;
   }
@@ -48,8 +43,7 @@ async function sendReport(app: {
 export function showError(err: unknown, hint?: AppErrorCode) {
   const app = toAppError(err, hint);
   const description = composeDescription(app);
-  const reportable =
-    !!app.code && REPORTABLE_ERROR_CODES.has(app.code as AppErrorCode);
+  const reportable = !!app.code && REPORTABLE_ERROR_CODES.has(app.code as AppErrorCode);
 
   const options: Parameters<typeof toast.error>[1] = {};
   if (description) options.description = description;
