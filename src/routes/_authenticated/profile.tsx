@@ -50,10 +50,10 @@ export const Route = createFileRoute("/_authenticated/profile")({
         content: "Gestiona tu cuenta, tus preferencias y tu privacidad en Melik Recipes.",
       },
       { property: "og:title", content: "Mi perfil — Melik Recipes" },
-      { property: "og:url", content: "https://melik-recipes.lovable.app/profile" },
+      { property: "og:url", content: "https://recipes.melikbakery.com/profile" },
       { name: "robots", content: "noindex" },
     ],
-    links: [{ rel: "canonical", href: "https://melik-recipes.lovable.app/profile" }],
+    links: [{ rel: "canonical", href: "https://recipes.melikbakery.com/profile" }],
   }),
   component: ProfilePage,
 });

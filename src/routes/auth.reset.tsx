@@ -12,9 +12,9 @@ export const Route = createFileRoute("/auth/reset")({
         content: "Solicita un enlace para restablecer la contraseña de tu cuenta en Melik Recipes.",
       },
       { property: "og:title", content: "Recuperar contraseña — Melik Recipes" },
-      { property: "og:url", content: "https://melik-recipes.lovable.app/auth/reset" },
+      { property: "og:url", content: "https://recipes.melikbakery.com/auth/reset" },
     ],
-    links: [{ rel: "canonical", href: "https://melik-recipes.lovable.app/auth/reset" }],
+    links: [{ rel: "canonical", href: "https://recipes.melikbakery.com/auth/reset" }],
   }),
   component: ResetPage,
 });

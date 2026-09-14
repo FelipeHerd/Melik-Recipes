@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-const BASE_URL = "https://melik-recipes.lovable.app";
+const BASE_URL = "https://recipes.melikbakery.com";
 
 interface SitemapEntry {
   path: string;

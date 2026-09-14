@@ -25,7 +25,7 @@ export const Route = createFileRoute("/descubrir")({
         content: "Descubre nuevas recetas con IA multimodal y explora la comunidad.",
       },
     ],
-    links: [{ rel: "canonical", href: "https://melik-recipes.lovable.app/descubrir" }],
+    links: [{ rel: "canonical", href: "https://recipes.melikbakery.com/descubrir" }],
   }),
   component: DescubrirLayout,
 });
