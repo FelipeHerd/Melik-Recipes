@@ -334,7 +334,7 @@ export function MelikPlusCheckoutModal({
               </div>
 
               {/* Error Banner section (R4 Branded Connection Error) */}
-              {status === "error" && (
+              {(status === "error" || status === "loading-error") && (
                 <PaymentConnectionErrorAlert
                   errorDetails={gatewayError}
                   onRetry={() => handlePaymentSubmit(undefined, "connection_error")}
